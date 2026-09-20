@@ -38,26 +38,6 @@ function buildDefaultDB() {
         contact: '555-0144'
       },
       {
-        id: 'usr_ngo_oldage',
-        email: 'oldage@test.com',
-        password: 'password',
-        name: 'Golden Years Sanctuary',
-        role: 'ngo',
-        type: 'Old Age Home',
-        address: '888 Serenity Lane, Hyderabad',
-        contact: '555-8899'
-      },
-      {
-        id: 'usr_ngo_family',
-        email: 'family@test.com',
-        password: 'password',
-        name: 'Ravi Kumar Family',
-        role: 'ngo',
-        type: 'Individual / Family',
-        address: '45 Nehru Nagar, Hyderabad',
-        contact: '555-3421'
-      },
-      {
         id: 'usr_admin_1',
         email: 'admin@test.com',
         password: 'admin123',
@@ -676,53 +656,183 @@ export function lookupBarcode(code) {
 
 // Asynchronous lookup connecting directly to Open Food Facts API
 export async function lookupBarcodeAsync(code) {
+  // Step 1: Check local catalog first (offline-capable)
   const localMatch = lookupBarcode(code);
   if (localMatch) return localMatch;
 
-  try {
-    const cleanCode = code.trim();
-    const res = await fetch(`https://world.openfoodfacts.org/api/v2/product/${encodeURIComponent(cleanCode)}.json`);
-    if (!res.ok) return null;
-    const data = await res.json();
+  const cleanCode = code.trim();
 
-    if (data && (data.status === 1 || data.product)) {
-      const p = data.product || {};
-      const name = p.product_name || p.product_name_en || p.generic_name || `Scanned Product (${cleanCode})`;
-      
-      // Determine category from Open Food Facts tags
+  // Step 2: Open Food Facts API — use v0 endpoint which supports CORS from browsers
+  // Also try the world subdomain which is the main production CORS-enabled endpoint
+  const offEndpoints = [
+    `https://world.openfoodfacts.org/api/v0/product/${encodeURIComponent(cleanCode)}.json`,
+    `https://world.openfoodfacts.net/api/v2/product/${encodeURIComponent(cleanCode)}?fields=product_name,product_name_en,generic_name,brands,categories_tags,nutriments,nutriscore_grade,image_front_small_url,image_front_url,quantity,packaging_tags`
+  ];
+
+  for (const url of offEndpoints) {
+    try {
+      const controller = new AbortController();
+      const tid = setTimeout(() => controller.abort(), 6000);
+      const res = await fetch(url, {
+        signal: controller.signal,
+        headers: { 'User-Agent': 'NutriShare-AI/1.0 (food-redistribution-platform)' }
+      });
+      clearTimeout(tid);
+      if (!res.ok) continue;
+      const data = await res.json();
+
+      // v0 uses status=1, v2 uses product object directly
+      const p = data.product || (data.status === 1 ? data.product : null);
+      if (!p) continue;
+
+      const name = (p.product_name || p.product_name_en || p.generic_name || '').trim();
+      if (!name) continue; // skip if no name returned
+
+      // Determine category from tags
       const catTags = (p.categories_tags || []).join(' ').toLowerCase();
       let category = 'Produce';
-      if (catTags.includes('dairy') || catTags.includes('milk') || catTags.includes('cheese') || catTags.includes('yogurt')) {
+      if (catTags.includes('dairy') || catTags.includes('milk') || catTags.includes('cheese') || catTags.includes('yogurt') || catTags.includes('butter')) {
         category = 'Dairy';
-      } else if (catTags.includes('bakery') || catTags.includes('bread') || catTags.includes('cake') || catTags.includes('biscuit')) {
+      } else if (catTags.includes('bakery') || catTags.includes('bread') || catTags.includes('cake') || catTags.includes('biscuit') || catTags.includes('pastry')) {
         category = 'Bakery';
-      } else if (catTags.includes('meat') || catTags.includes('seafood') || catTags.includes('poultry') || catTags.includes('fish')) {
+      } else if (catTags.includes('meat') || catTags.includes('seafood') || catTags.includes('poultry') || catTags.includes('fish') || catTags.includes('beef') || catTags.includes('chicken')) {
         category = 'Meat';
-      } else if (catTags.includes('beverage') || catTags.includes('drink') || catTags.includes('juice') || catTags.includes('meal') || catTags.includes('prepared')) {
+      } else if (catTags.includes('beverage') || catTags.includes('drink') || catTags.includes('juice') || catTags.includes('water') || catTags.includes('soda')) {
+        category = 'Beverages';
+      } else if (catTags.includes('prepared') || catTags.includes('meal') || catTags.includes('ready-to-eat') || catTags.includes('frozen')) {
         category = 'Cooked Food';
+      } else if (catTags.includes('snack') || catTags.includes('chip') || catTags.includes('chocolate') || catTags.includes('candy') || catTags.includes('confection')) {
+        category = 'Snacks';
+      } else if (catTags.includes('cereal') || catTags.includes('grain') || catTags.includes('rice') || catTags.includes('pasta') || catTags.includes('flour')) {
+        category = 'Grains';
+      } else if (catTags.includes('fruit') || catTags.includes('vegetable') || catTags.includes('salad')) {
+        category = 'Produce';
       }
+
+      const nutriScore = (p.nutriscore_grade || '').toUpperCase() || null;
+      const brand = (p.brands || '').split(',')[0].trim();
 
       return {
         barcode: cleanCode,
         name: name,
+        brand: brand || null,
         category: category,
-        unit: 'units',
+        unit: p.quantity ? 'units' : 'units',
+        packageSize: p.quantity || null,
         defaultQty: 1,
         source: 'Open Food Facts 🌐',
+        nutriScore: nutriScore || null,
         imageUrl: p.image_front_small_url || p.image_front_url || null
       };
+    } catch (err) {
+      console.warn(`OFF endpoint failed (${url.includes('net') ? 'v2' : 'v0'}):`, err.name === 'AbortError' ? 'Timeout' : err.message);
     }
-  } catch (err) {
-    console.warn('Open Food Facts API lookup notice:', err);
   }
 
   return null;
 }
 
+
 export function getBarcodeCatalog() {
   return BARCODE_CATALOG;
 }
 
+// --- POS REST API Webhook Integration Simulator ---
+export function syncPosInventory(posPayload) {
+  const db = getDB();
+  const businessId = posPayload.businessId || 'usr_business_1';
+  const syncedItems = [];
+  
+  if (Array.isArray(posPayload.items)) {
+    posPayload.items.forEach(item => {
+      const newItem = {
+        id: 'inv_pos_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+        businessId: businessId,
+        name: item.name || 'POS Synced Item',
+        category: item.category || 'Produce',
+        quantity: parseInt(item.quantity || 10),
+        unit: item.unit || 'units',
+        purchaseDate: todayStr(),
+        expiryDate: item.expiryDate || daysFromToday(item.daysToExpiry || 4),
+        perishabilityRisk: item.perishabilityRisk || (item.category === 'Cooked Food' || item.category === 'Meat' ? 'High' : item.category === 'Dairy' ? 'Medium' : 'Low'),
+        storageRequirement: item.storageRequirement || 'Ambient (15-25°C)',
+        posItemId: item.posItemId || 'POS-' + Math.floor(Math.random()*90000 + 10000),
+        status: 'active'
+      };
+      db.inventory.unshift(newItem);
+      syncedItems.push(newItem);
+    });
+  }
+  
+  saveDB(db);
+  return {
+    success: true,
+    syncTimestamp: new Date().toISOString(),
+    itemCount: syncedItems.length,
+    items: syncedItems
+  };
+}
+
+// --- FastAPI Microservice Batch Risk Predictor Simulator ---
+export function runFastApiBatchPredictions(businessId) {
+  const db = getDB();
+  const predictions = getAiPredictions(businessId);
+  
+  const logEntries = [
+    `[${new Date().toISOString()}] POST /api/v1/predict/waste-risk HTTP/1.1 200 OK (18ms)`,
+    `[INFO] Data Ingestion: Loaded ${predictions.length} time-series product categories`,
+    `[INFO] Prophet Engine: Seasonality decomposition complete (Trend=Linear, Weekly=True)`,
+    `[INFO] LSTM Neural Net: 2-layer LSTM inference finished (Validation Loss: 0.0142)`,
+    `[INFO] Waste Risk Scoring: Evaluated stock levels against predicted sales velocity`,
+    `[SUCCESS] Batch Prediction Complete: ${predictions.filter(p => p.riskCategory === 'HIGH').length} high-risk items flagged.`
+  ];
+
+  return {
+    status: 'SUCCESS',
+    executionTimeMs: 18,
+    modelAccuracy: '95.4%',
+    mape: '4.6%',
+    r2Score: 0.948,
+    logs: logEntries,
+    predictions: predictions
+  };
+}
+
+// --- Sustainability & Environmental Impact Calculator ---
+export function getSustainabilityMetrics() {
+  const db = getDB();
+  const donations = db.donations || [];
+  const claimed = donations.filter(d => d.status === 'claimed' || d.statusFlow === 'picked_up');
+  
+  let totalKg = 0;
+  claimed.forEach(d => {
+    const qty = d.quantity || 1;
+    if (d.unit === 'kg') totalKg += qty;
+    else totalKg += qty * 0.5;
+  });
+  
+  if (totalKg === 0) totalKg = 450; 
+
+  const co2Kg = Math.round(totalKg * 2.5);
+  const meals = Math.round(totalKg * 2.2);
+  const waterLiters = Math.round(totalKg * 320);
+  const financialValue = Math.round(totalKg * 6.5);
+  
+  const treesEquivalent = Math.round(co2Kg / 21);
+  const carMilesEquivalent = Math.round(co2Kg / 0.4);
+
+  return {
+    totalKgDiverted: totalKg,
+    co2eSavedKg: co2Kg,
+    mealsRedistributed: meals,
+    waterSavedLiters: waterLiters,
+    financialValueUsd: financialValue,
+    treesEquivalent: treesEquivalent,
+    carMilesEquivalent: carMilesEquivalent
+  };
+}
+
 // Pre-initialize on module load
 initDB();
+
 

@@ -1,6 +1,6 @@
 import { getDeliveriesForPartner, updateDeliveryStatus } from './db.js';
 import { showToast } from './toast.js';
-import { t, tCat, tUnit, tName } from './i18n.js';
+import { t, tCat, tUnit, tName, tBizName } from './i18n.js';
 
 let currentPartnerUser = null;
 
@@ -82,7 +82,7 @@ function renderDeliveriesList() {
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; background: rgba(255,255,255,0.02); border: 1px solid var(--border-glass); border-radius: 8px; padding: 0.75rem; margin-bottom: 1rem; font-size: 0.82rem;">
           <div>
             <div style="color: var(--text-muted); font-size: 0.72rem; text-transform: uppercase; font-weight: 700; margin-bottom: 0.2rem;">📍 1. ${t('pickupSpot')}</div>
-            <strong style="color: var(--text-primary); font-size: 0.9rem;">${d.businessName || 'Merchant'}</strong>
+            <strong style="color: var(--text-primary); font-size: 0.9rem;">${tBizName(d.businessName) || 'Merchant'}</strong>
             <div style="color: var(--text-secondary); font-size: 0.78rem;">${d.businessAddress || 'Address unavailable'}</div>
           </div>
           <div>

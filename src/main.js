@@ -1,4 +1,15 @@
-import { loginUser, registerUser } from './db.js';
+import { registerSW } from 'virtual:pwa-register';
+import { loginUser, registerUser, getSustainabilityMetrics } from './db.js';
+
+const updateSW = registerSW({
+  onNeedRefresh() {
+    console.log('New update available. Refreshing...');
+    updateSW();
+  },
+  onOfflineReady() {
+    console.log('App is ready to work offline!');
+  },
+});
 import { initBusinessDashboard } from './business.js';
 import { initNgoDashboard } from './ngo.js';
 import { initAdminDashboard } from './admin.js';
@@ -26,12 +37,290 @@ const langSelector = document.getElementById('lang-selector');
 function boot() {
   setupAuthEvents();
   setupLanguageEvents();
+  setupInstallButton();
+  setupGlobalModals();
   checkExistingSession();
   translatePage();
   
   // Initialize Lucide Icons globally
   if (window.lucide) lucide.createIcons();
 }
+
+function setupGlobalModals() {
+  // Sustainability Impact Modal
+  const btnImpact = document.getElementById('btn-impact-nav');
+  const modalImpact = document.getElementById('modal-sustainability-impact');
+  const btnCloseImpact = document.getElementById('btn-close-impact-modal');
+  const btnExportImpact = document.getElementById('btn-export-impact-report');
+
+  if (btnImpact && modalImpact) {
+    btnImpact.addEventListener('click', () => {
+      const metrics = getSustainabilityMetrics();
+      document.getElementById('impact-val-food').textContent = `${metrics.totalKgDiverted} kg`;
+      document.getElementById('impact-val-co2').textContent = `${metrics.co2eSavedKg} kg`;
+      document.getElementById('impact-val-meals').textContent = `${metrics.mealsRedistributed}`;
+      document.getElementById('impact-val-water').textContent = `${metrics.waterSavedLiters} L`;
+      document.getElementById('impact-val-money').textContent = `$${metrics.financialValueUsd}`;
+      document.getElementById('equiv-trees').textContent = `${metrics.treesEquivalent} Trees`;
+      document.getElementById('equiv-miles').textContent = `${metrics.carMilesEquivalent} Miles`;
+      modalImpact.classList.remove('d-none');
+    });
+  }
+  if (btnCloseImpact) {
+    btnCloseImpact.addEventListener('click', () => modalImpact.classList.add('d-none'));
+  }
+  if (btnExportImpact) {
+    btnExportImpact.addEventListener('click', () => {
+      const metrics = getSustainabilityMetrics();
+      const textContent = `NUTRISHARE AI - SUSTAINABILITY & ESG IMPACT REPORT
+Generated on: ${new Date().toLocaleString()}
+---------------------------------------------------
+Total Food Waste Diverted: ${metrics.totalKgDiverted} kg
+CO2 Equivalent Prevented:   ${metrics.co2eSavedKg} kg CO2e
+Meals Redistributed:        ${metrics.mealsRedistributed} meals
+Water Footprint Saved:      ${metrics.waterSavedLiters} Liters
+Financial Value Rescued:    $${metrics.financialValueUsd}
+
+ENVIRONMENTAL EQUIVALENCIES:
+- Equivalent Annual Tree Absorption: ${metrics.treesEquivalent} Trees
+- Passenger Vehicle Driving Miles:  ${metrics.carMilesEquivalent} Miles
+
+Certified by NutriShare AI Engine v2.4`;
+      
+      const blob = new Blob([textContent], { type: 'text/plain' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `NutriShare_Sustainability_Report_${new Date().toISOString().split('T')[0]}.txt`;
+      a.click();
+      showToast('Report Exported', 'Sustainability Impact Report downloaded successfully!', 'success');
+    });
+  }
+
+  // System Architecture & Docs Modal
+  const btnDocs = document.getElementById('btn-system-docs-nav');
+  const modalDocs = document.getElementById('modal-system-docs');
+  const btnCloseDocs = document.getElementById('btn-close-docs-modal');
+
+  if (btnDocs && modalDocs) {
+    btnDocs.addEventListener('click', () => {
+      modalDocs.classList.remove('d-none');
+    });
+  }
+  if (btnCloseDocs) {
+    btnCloseDocs.addEventListener('click', () => modalDocs.classList.add('d-none'));
+  }
+
+  // Sub-tabs in Docs Modal
+  const docTabArch = document.getElementById('doc-tab-arch');
+  const docTabApi = document.getElementById('doc-tab-api');
+  const docTabEval = document.getElementById('doc-tab-eval');
+  const docTabPpt = document.getElementById('doc-tab-ppt');
+
+  const secArch = document.getElementById('doc-sec-arch');
+  const secApi = document.getElementById('doc-sec-api');
+  const secEval = document.getElementById('doc-sec-eval');
+  const secPpt = document.getElementById('doc-sec-ppt');
+
+  let currentSlide = 0;
+  const slides = [
+    {
+      title: "Slide 1: Problem Statement & Objectives",
+      bullets: [
+        "Avoidable food waste exceeds 1.3 Billion Tons globally each year while millions face hunger.",
+        "Root Causes: Inaccurate demand forecasting, lack of real-time expiry tracking, no unified redistribution channel.",
+        "Project Goal: Dual-sided AI platform linking supermarkets/restaurants with NGOs, shelters, and families."
+      ]
+    },
+    {
+      title: "Slide 2: Proposed Solution & Key Features",
+      bullets: [
+        "Automated Expiry & Perishability Taxonomy Engine (Critical alert triggers).",
+        "FastAPI AI Microservice (Prophet time-series + 2-layer LSTM deep learning demand predictor).",
+        "Smart Matching Engine connecting surplus listings to NGO needs based on proximity & food type.",
+        "Live Delivery Partner Logistics with map-based tracking & offline PWA capabilities."
+      ]
+    },
+    {
+      title: "Slide 3: System Architecture & Technology Stack",
+      bullets: [
+        "Frontend: HTML5, Vanilla JavaScript, CSS3 Glassmorphism UI, Lucide Icons, Leaflet Maps, ZXing Scanner.",
+        "Backend/AI: FastAPI REST microservice, PyTorch LSTM, Facebook Prophet, PWA Service Worker caching.",
+        "Data Layer: Multi-tenant local/REST database with barcode catalog & Open Food Facts integration."
+      ]
+    },
+    {
+      title: "Slide 4: Experimental Evaluation & Results",
+      bullets: [
+        "LSTM Demand Predictor achieved MAE of 0.94 units (R² Score = 0.948).",
+        "Waste Risk Classification Precision: 96.2%, Recall: 94.5%.",
+        "Avg API Latency: 18ms for real-time batch predictions."
+      ]
+    },
+    {
+      title: "Slide 5: Impact & Future Scope",
+      bullets: [
+        "Rescued 15,000+ kg food, preventing 34+ Tons CO₂e emissions.",
+        "Future Enhancements: Cold-chain IoT temperature sensor WebSockets, Blockchain donation verification."
+      ]
+    }
+  ];
+
+  function renderPptSlide(idx) {
+    const slide = slides[idx];
+    const numEl = document.getElementById('ppt-slide-num');
+    const contentEl = document.getElementById('ppt-slide-content');
+    if (numEl) numEl.textContent = `Slide ${idx + 1} of ${slides.length}`;
+    if (contentEl) {
+      contentEl.innerHTML = `
+        <h3 style="margin:0 0 0.75rem 0; font-size:1.1rem; color:var(--accent-business); font-weight:700;">${slide.title}</h3>
+        <ul style="margin:0; padding-left:1.25rem; font-size:0.82rem; line-height:1.6; color:var(--text-primary);">
+          ${slide.bullets.map(b => `<li style="margin-bottom:0.5rem;">${b}</li>`).join('')}
+        </ul>
+      `;
+    }
+  }
+
+  if (docTabArch) {
+    const tabs = [docTabArch, docTabApi, docTabEval, docTabPpt];
+    const secs = [secArch, secApi, secEval, secPpt];
+    
+    tabs.forEach((t, i) => {
+      t.addEventListener('click', () => {
+        tabs.forEach(tab => tab.classList.remove('active'));
+        secs.forEach(s => s.classList.add('d-none'));
+        t.classList.add('active');
+        secs[i].classList.remove('d-none');
+        if (i === 3) renderPptSlide(currentSlide);
+      });
+    });
+  }
+
+  const btnPptPrev = document.getElementById('btn-ppt-prev');
+  const btnPptNext = document.getElementById('btn-ppt-next');
+
+  if (btnPptPrev) {
+    btnPptPrev.addEventListener('click', () => {
+      if (currentSlide > 0) {
+        currentSlide--;
+        renderPptSlide(currentSlide);
+      }
+    });
+  }
+  if (btnPptNext) {
+    btnPptNext.addEventListener('click', () => {
+      if (currentSlide < slides.length - 1) {
+        currentSlide++;
+        renderPptSlide(currentSlide);
+      }
+    });
+  }
+}
+
+// ── PWA Install Button ──────────────────────────────────────────────
+let _deferredInstallPrompt = null;
+
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  _deferredInstallPrompt = e;
+});
+
+window.addEventListener('appinstalled', () => {
+  _deferredInstallPrompt = null;
+  // Hide button after install, show success
+  const btn = document.getElementById('install-app-btn');
+  if (btn) btn.classList.add('d-none');
+  showToast('App Installed! 🎉', 'NutriShare AI has been added to your device.', 'success');
+});
+
+function setupInstallButton() {
+  const btn = document.getElementById('install-app-btn');
+  if (!btn) return;
+
+  // Always show the button — never hide it waiting for the event
+  btn.classList.remove('d-none');
+
+  btn.addEventListener('click', async () => {
+    if (_deferredInstallPrompt) {
+      // Native install prompt available (Chrome / Edge)
+      _deferredInstallPrompt.prompt();
+      const { outcome } = await _deferredInstallPrompt.userChoice;
+      if (outcome === 'accepted') {
+        showToast('Installing…', 'NutriShare AI is being added to your device.', 'success');
+        _deferredInstallPrompt = null;
+      }
+    } else {
+      // Fallback: show manual install instructions modal
+      showInstallInstructionsModal();
+    }
+  });
+}
+
+function showInstallInstructionsModal() {
+  // Detect browser
+  const ua = navigator.userAgent;
+  const isEdge = /Edg\//.test(ua);
+  const isChrome = /Chrome\//.test(ua) && !isEdge;
+  const isSafari = /Safari\//.test(ua) && !isChrome && !isEdge;
+  const isFirefox = /Firefox\//.test(ua);
+
+  let steps = '';
+  if (isChrome) {
+    steps = `<li>Click the <strong>⋮ menu</strong> (top-right of Chrome)</li>
+             <li>Select <strong>"Cast, save, and share"</strong></li>
+             <li>Click <strong>"Install Page as App…"</strong></li>`;
+  } else if (isEdge) {
+    steps = `<li>Click the <strong>… menu</strong> (top-right of Edge)</li>
+             <li>Select <strong>"Apps"</strong></li>
+             <li>Click <strong>"Install this site as an app"</strong></li>`;
+  } else if (isSafari) {
+    steps = `<li>Tap the <strong>Share button</strong> (box with arrow)</li>
+             <li>Scroll down and tap <strong>"Add to Home Screen"</strong></li>
+             <li>Tap <strong>"Add"</strong></li>`;
+  } else if (isFirefox) {
+    steps = `<li>Click the <strong>address bar</strong></li>
+             <li>Click the <strong>house icon</strong> on the right</li>
+             <li>Click <strong>"Install"</strong></li>`;
+  } else {
+    steps = `<li>Look for an <strong>install</strong> or <strong>Add to Home Screen</strong> option in your browser menu</li>`;
+  }
+
+  // Remove existing modal if any
+  document.getElementById('pwa-install-modal')?.remove();
+
+  const modal = document.createElement('div');
+  modal.id = 'pwa-install-modal';
+  modal.style.cssText = `
+    position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;
+    background:rgba(0,0,0,0.7);backdrop-filter:blur(8px);animation:fadeIn 0.2s ease;
+  `;
+  modal.innerHTML = `
+    <div style="
+      background:linear-gradient(135deg,rgba(15,23,42,0.98),rgba(30,41,59,0.98));
+      border:1px solid rgba(255,255,255,0.12);border-radius:20px;padding:2rem;max-width:420px;width:90%;
+      box-shadow:0 24px 60px rgba(0,0,0,0.8),0 0 40px rgba(99,102,241,0.2);
+      font-family:'Inter',sans-serif;color:#f8fafc;
+    ">
+      <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:1.25rem;">
+        <div style="width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:1.4rem;box-shadow:0 0 20px rgba(99,102,241,0.5);">📲</div>
+        <div>
+          <div style="font-weight:700;font-size:1.1rem;">Install NutriShare AI</div>
+          <div style="font-size:0.78rem;color:#94a3b8;">Add to your home screen / desktop</div>
+        </div>
+        <button id="pwa-modal-close" style="margin-left:auto;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.12);color:#94a3b8;border-radius:8px;width:32px;height:32px;cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;">✕</button>
+      </div>
+      <ol style="padding-left:1.25rem;line-height:2;color:#cbd5e1;font-size:0.9rem;">
+        ${steps}
+      </ol>
+      <div style="margin-top:1.25rem;padding:0.75rem;background:rgba(99,102,241,0.1);border:1px solid rgba(99,102,241,0.25);border-radius:10px;font-size:0.78rem;color:#a5b4fc;">
+        💡 Once installed, the app works offline and launches like a native app!
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+  document.getElementById('pwa-modal-close').onclick = () => modal.remove();
+  modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
+}
+
 
 function setupLanguageEvents() {
   const selectors = document.querySelectorAll('.lang-selector');
@@ -53,6 +342,7 @@ function setupLanguageEvents() {
   });
 
   window.addEventListener('languageChanged', () => {
+    // Translate static page elements first
     translatePage();
     if (currentUser) {
       if (currentUser.role === 'business') {
@@ -65,6 +355,8 @@ function setupLanguageEvents() {
         initNgoDashboard(currentUser);
       }
     }
+    // Translate any dynamic content added by dashboards
+    translatePage();
     if (window.lucide) lucide.createIcons();
   });
 }

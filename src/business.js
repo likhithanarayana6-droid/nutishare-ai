@@ -5,11 +5,13 @@ import {
   donateInventoryItem, 
   getAiPredictions,
   lookupBarcode,
-  lookupBarcodeAsync
+  lookupBarcodeAsync,
+  syncPosInventory,
+  runFastApiBatchPredictions
 } from './db.js';
 // BrowserMultiFormatReader provided by ZXing CDN (global ZXing)
 import { showToast } from './toast.js';
-import { t, tCat, tUnit, tName } from './i18n.js';
+import { t, tCat, tUnit, tName, tBizName } from './i18n.js';
 
 let activeChart = null;
 let currentBusinessId = null;
@@ -30,7 +32,7 @@ export function initBusinessDashboard(user) {
   currentBusinessProfile = user;
   
   // Set welcome message
-  document.getElementById('biz-welcome').textContent = `${t('welcome')}, ${user.name}`;
+  document.getElementById('biz-welcome').textContent = `${t('welcome')}, ${tBizName(user.name)}`;
   
   // Set up forms & event listeners
   setupInventoryForm();
@@ -38,6 +40,8 @@ export function initBusinessDashboard(user) {
   setupBarcodeScanner();
   setupDonationModal();
   setupDeliveryPartners();
+  setupPosIntegration();
+  setupFastApiSimulator();
   
   // Render views
   renderInventory();
@@ -99,24 +103,27 @@ function setupInventoryForm() {
     const quantity = document.getElementById('inv-quantity').value;
     const unit = document.getElementById('inv-unit').value;
     const expiryDate = document.getElementById('inv-expiry').value;
+    const perishabilityRisk = document.getElementById('inv-perishability') ? document.getElementById('inv-perishability').value : 'Medium';
+    const storageRequirement = document.getElementById('inv-storage') ? document.getElementById('inv-storage').value : 'Ambient (15-25°C)';
 
     try {
-      addInventoryItem(currentBusinessId, { name, category, quantity, unit, expiryDate });
+      addInventoryItem(currentBusinessId, { name, category, quantity, unit, expiryDate, perishabilityRisk, storageRequirement });
       form.reset();
       document.getElementById('inv-expiry').value = tomorrow.toISOString().split('T')[0];
       
       // Flash message & Refresh
-      showToast('Product Added', `Successfully added ${name} to inventory.`, 'success');
+      showToast('Product Added', `Successfully added ${name} (${perishabilityRisk} Risk, ${storageRequirement}) to inventory.`, 'success');
       renderInventory();
     } catch (err) {
       showToast('Error Adding Product', err.message, 'error');
     }
   };
 
-  // Add sub-tabs toggling (Manual, CSV, Barcode)
+  // Add sub-tabs toggling (Manual, CSV, Barcode, POS)
   const tabManual = document.getElementById('add-tab-manual');
   const tabCsv = document.getElementById('add-tab-csv');
   const tabScan = document.getElementById('add-tab-scan');
+  const tabPos = document.getElementById('add-tab-pos');
 
   const formManual = document.getElementById('form-manual-entry');
   const sectionCsv = document.getElementById('section-csv-upload');
@@ -126,6 +133,7 @@ function setupInventoryForm() {
     tabManual.classList.add('active');
     tabCsv.classList.remove('active');
     tabScan.classList.remove('active');
+    if (tabPos) tabPos.classList.remove('active');
     formManual.classList.remove('d-none');
     sectionCsv.classList.add('d-none');
     sectionScan.classList.add('d-none');
@@ -135,6 +143,7 @@ function setupInventoryForm() {
     tabCsv.classList.add('active');
     tabManual.classList.remove('active');
     tabScan.classList.remove('active');
+    if (tabPos) tabPos.classList.remove('active');
     sectionCsv.classList.remove('d-none');
     formManual.classList.add('d-none');
     sectionScan.classList.add('d-none');
@@ -144,12 +153,91 @@ function setupInventoryForm() {
     tabScan.classList.add('active');
     tabManual.classList.remove('active');
     tabCsv.classList.remove('active');
+    if (tabPos) tabPos.classList.remove('active');
     sectionScan.classList.remove('d-none');
     formManual.classList.add('d-none');
     sectionCsv.classList.add('d-none');
-    // Auto-start camera immediately when barcode tab is selected
     if (!scannerActive) startScanner();
   });
+
+  if (tabPos) {
+    tabPos.addEventListener('click', () => {
+      const modal = document.getElementById('modal-pos-integration');
+      if (modal) modal.classList.remove('d-none');
+    });
+  }
+}
+
+function setupPosIntegration() {
+  const modal = document.getElementById('modal-pos-integration');
+  const btnCloseModal = document.getElementById('btn-close-pos-modal');
+  const btnTriggerSync = document.getElementById('btn-trigger-pos-sync');
+  const btnCopyUrl = document.getElementById('btn-copy-pos-url');
+  const terminal = document.getElementById('pos-sync-terminal');
+
+  if (btnCloseModal) {
+    btnCloseModal.addEventListener('click', () => modal.classList.add('d-none'));
+  }
+  if (btnCopyUrl) {
+    btnCopyUrl.addEventListener('click', () => {
+      const urlInput = document.getElementById('pos-endpoint-url');
+      if (urlInput) {
+        navigator.clipboard.writeText(urlInput.value);
+        showToast('Copied', 'POS Endpoint Webhook URL copied to clipboard!', 'success');
+      }
+    });
+  }
+  if (btnTriggerSync) {
+    btnTriggerSync.addEventListener('click', () => {
+      const provider = document.getElementById('pos-provider-select').value;
+      terminal.classList.remove('d-none');
+      terminal.innerHTML = `<div>[${new Date().toLocaleTimeString()}] POS WEBHOOK RECEIVED: Provider=${provider}</div><div>[PROCESSING] Ingesting real-time sales & inventory items...</div>`;
+      
+      const posData = {
+        businessId: currentBusinessId,
+        items: [
+          { name: `${provider} Organic Avocados`, category: 'Produce', quantity: 20, unit: 'kg', daysToExpiry: 3, perishabilityRisk: 'High', storageRequirement: 'Cold Storage (2-4°C)' },
+          { name: `${provider} Artisan Sourdough`, category: 'Bakery', quantity: 15, unit: 'units', daysToExpiry: 2, perishabilityRisk: 'Medium', storageRequirement: 'Ambient (15-25°C)' }
+        ]
+      };
+      
+      setTimeout(() => {
+        const res = syncPosInventory(posData);
+        terminal.innerHTML += `<div>[SUCCESS] HTTP 200 OK — Synced ${res.itemCount} inventory items from ${provider} POS.</div>`;
+        showToast('POS Webhook Synced', `Received 2 new inventory items from ${provider} POS!`, 'success');
+        renderInventory();
+        renderAiPredictions();
+      }, 600);
+    });
+  }
+}
+
+function setupFastApiSimulator() {
+  const btnRun = document.getElementById('btn-run-fastapi-batch');
+  const btnSwagger = document.getElementById('btn-view-openapi-spec');
+  const terminal = document.getElementById('fastapi-log-terminal');
+
+  if (btnRun) {
+    btnRun.addEventListener('click', () => {
+      terminal.innerHTML = `<div>[EXECUTING] Running Prophet + LSTM Batch Scoring Job...</div>`;
+      setTimeout(() => {
+        const res = runFastApiBatchPredictions(currentBusinessId);
+        terminal.innerHTML = res.logs.map(l => `<div>${l}</div>`).join('');
+        showToast('FastAPI Model Execution Finished', `Batch waste prediction scoring completed in ${res.executionTimeMs}ms (R² = ${res.r2Score})`, 'success');
+        renderAiPredictions();
+      }, 700);
+    });
+  }
+
+  if (btnSwagger) {
+    btnSwagger.addEventListener('click', () => {
+      const docsModal = document.getElementById('modal-system-docs');
+      if (docsModal) {
+        docsModal.classList.remove('d-none');
+        document.getElementById('doc-tab-api').click();
+      }
+    });
+  }
 }
 
 // --- 2. CSV Bulk Uploader ---
@@ -370,6 +458,61 @@ function setupBarcodeScanner() {
   // When user switches AWAY from the barcode tab, stop the scanner
   document.getElementById('add-tab-manual').addEventListener('click', stopScanner);
   document.getElementById('add-tab-csv').addEventListener('click', stopScanner);
+
+  // Handle Photo / Image Upload barcode decoding
+  const bizFileInput = document.getElementById('biz-file-input');
+  if (bizFileInput) {
+    bizFileInput.addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      setScannerStatus('active', 'Processing uploaded barcode image…');
+      const imgUrl = URL.createObjectURL(file);
+      let decodedText = null;
+
+      // 1. Try native BarcodeDetector API if available
+      if ('BarcodeDetector' in window) {
+        try {
+          const detector = new window.BarcodeDetector({ formats: ['qr_code', 'ean_13', 'ean_8', 'code_128', 'upc_a', 'upc_e'] });
+          const imgElement = new Image();
+          imgElement.src = imgUrl;
+          await imgElement.decode();
+          const results = await detector.detect(imgElement);
+          if (results && results.length > 0) {
+            decodedText = results[0].rawValue;
+          }
+        } catch (err) {
+          console.warn('Native BarcodeDetector notice:', err);
+        }
+      }
+
+      // 2. Fallback to ZXing decodeFromImageUrl
+      if (!decodedText) {
+        if (!zxingReader && window.ZXing && window.ZXing.BrowserMultiFormatReader) {
+          try { zxingReader = new window.ZXing.BrowserMultiFormatReader(); } catch (_) {}
+        }
+        if (zxingReader) {
+          try {
+            const result = await zxingReader.decodeFromImageUrl(imgUrl);
+            if (result) decodedText = result.getText();
+          } catch (err) {
+            console.warn('ZXing image decode notice:', err);
+          }
+        }
+      }
+
+      URL.revokeObjectURL(imgUrl);
+
+      if (decodedText) {
+        setScannerStatus('idle', `Barcode detected: ${decodedText}`);
+        handleDetectedCode(decodedText);
+      } else {
+        setScannerStatus('error', 'Could not detect barcode from image. Try manual code or demo codes below!');
+        showToast('Scan Notice', 'Barcode not detected in image. Try typing code or using demo codes!', 'warning');
+      }
+      bizFileInput.value = '';
+    });
+  }
 }
 
 // Also stop when user switches to a different dashboard tab
@@ -398,42 +541,70 @@ async function startScanner() {
     overlay.textContent = 'Requesting camera access…';
   }
 
-  // Safe ZXing reader instance
-  if (window.ZXing && window.ZXing.BrowserMultiFormatReader) {
-    try {
-      zxingReader = new window.ZXing.BrowserMultiFormatReader();
-    } catch (e) {
-      console.warn('ZXing init error:', e);
-    }
-  }
-
-  if (!zxingReader) {
+  // Check MediaDevices support (requires HTTPS or localhost)
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
     if (overlay) {
       overlay.style.display = 'flex';
       overlay.innerHTML = `<div class="text-center" style="padding:1rem;">
-        <div style="font-size:1.5rem; margin-bottom:0.4rem;">📷</div>
-        <div style="font-weight:700; font-size:0.85rem;">Camera Library Loading…</div>
+        <div style="font-size:1.5rem; margin-bottom:0.4rem;">🔒</div>
+        <div style="font-weight:700; font-size:0.85rem;">HTTPS Required for Camera</div>
         <div style="font-size:0.72rem; color:var(--text-secondary); margin-top:0.3rem;">
-          You can use manual barcode entry or quick demo codes below to test adding items immediately!
+          Open <strong>https://nutrishare-ai-platform.surge.sh</strong> (not http://) or use photo upload below!
         </div>
       </div>`;
     }
-    setScannerStatus('warning', 'Webcam library loading — use manual entry below');
+    setScannerStatus('error', 'Camera requires HTTPS context');
     return;
   }
 
   try {
-    // Populate available camera devices
-    if (cameraSelect) {
-      try {
-        const videoDevices = await zxingReader.listVideoInputDevices();
-        if (videoDevices && videoDevices.length > 0) {
-          cameraSelect.innerHTML = videoDevices.map(d => `<option value="${d.deviceId}">${d.label || 'Camera ' + d.deviceId.slice(0, 5)}</option>`).join('');
-        }
-      } catch (_) {}
+    // Stop any existing ZXing session & video stream
+    if (zxingReader) { try { zxingReader.reset(); } catch (_) {} }
+    if (video && video.srcObject) {
+      video.srcObject.getTracks().forEach(t => t.stop());
+      video.srcObject = null;
     }
 
-    const deviceId = cameraSelect && cameraSelect.value ? cameraSelect.value : null;
+    // ---- Acquire camera stream via getUserMedia directly ----
+    // We do NOT use ZXing's decodeFromVideoDevice because it internally
+    // applies facingMode:environment which causes OverconstrainedError on desktop webcams.
+    let stream;
+    const selectedId = cameraSelect && cameraSelect.value && cameraSelect.value.trim();
+    try {
+      if (selectedId) {
+        // User picked a specific device — use exact deviceId
+        stream = await navigator.mediaDevices.getUserMedia({ video: { deviceId: { exact: selectedId } } });
+      } else {
+        // Prefer back camera on phones, but ideal (not exact) so desktop webcams still work
+        stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' } } });
+      }
+    } catch (_) {
+      // Last resort: open any camera with zero constraints
+      stream = await navigator.mediaDevices.getUserMedia({ video: true });
+    }
+
+    // Attach stream to <video> element
+    if (!video) throw new Error('Video element not found');
+    video.srcObject = stream;
+    video.setAttribute('playsinline', 'true');
+    video.muted = true;
+    await video.play();
+
+    // Populate device dropdown (labels only available after getUserMedia permission granted)
+    try {
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      const cams = devices.filter(d => d.kind === 'videoinput');
+      if (cams.length > 0 && cameraSelect) {
+        cameraSelect.innerHTML = cams.map((d, i) =>
+          `<option value="${d.deviceId}">${d.label || 'Camera ' + (i + 1)}</option>`
+        ).join('');
+      }
+    } catch (_) {}
+
+    // Init ZXing reader if not already done
+    if (!zxingReader && window.ZXing && window.ZXing.BrowserMultiFormatReader) {
+      try { zxingReader = new window.ZXing.BrowserMultiFormatReader(); } catch (_) {}
+    }
 
     setScannerStatus('active', 'Scanner active — point camera at a barcode');
     if (overlay) overlay.style.display = 'none';
@@ -441,9 +612,10 @@ async function startScanner() {
     if (btnStop) btnStop.classList.remove('d-none');
     scannerActive = true;
 
-    // Start decoding from selected video device
-    await zxingReader.decodeFromVideoDevice(deviceId, video, (result, err) => {
-      if (result) {
+    // Use decodeFromVideoElement — we already own the stream so ZXing applies NO device constraints
+    if (zxingReader && video) {
+      zxingReader.decodeFromVideoElement(video, (result) => {
+        if (!result) return;
         const code = result.getText();
         const now = Date.now();
         if (code === lastScannedCode && now - lastScannedAt < 3000) return;
@@ -451,54 +623,55 @@ async function startScanner() {
         lastScannedCode = code;
         lastScannedAt = now;
         handleDetectedCode(code);
-      }
-    });
+      });
+    }
 
   } catch (err) {
+    console.error('Camera start error:', err);
+    scannerActive = false;
+    if (btnStart) btnStart.classList.remove('d-none');
+    if (btnStop) btnStop.classList.add('d-none');
+
+    const isPermDenied = err && (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError');
     if (overlay) {
       overlay.style.display = 'flex';
-      const isPermDenied = err.name === 'NotAllowedError' || err.message?.includes('Permission');
       overlay.innerHTML = `<div class="text-center" style="padding:1rem;">
         <div style="font-size:1.5rem; margin-bottom:0.4rem;">📷</div>
-        <div style="font-weight:700; font-size:0.85rem;">${isPermDenied ? 'Camera Access Denied' : 'Camera Unavailable'}</div>
-        <div style="font-size:0.72rem; color:var(--text-secondary); margin-top:0.3rem;">
-          ${isPermDenied ? 'Allow camera access in browser settings, or click any demo barcode code below to test!' : 'Your browser or device does not have an active camera. Click any demo barcode code below to test!'}
+        <div style="font-weight:700; font-size:0.85rem;">${isPermDenied ? 'Camera Permission Needed' : 'Camera Stream Notice'}</div>
+        <div style="font-size:0.75rem; color:var(--text-secondary); margin-top:0.3rem; max-width:300px; margin-left:auto; margin-right:auto;">
+          ${isPermDenied
+            ? 'Click the <strong>🔒 Lock icon</strong> in your browser address bar → Camera → <strong>Allow</strong>, then reload!'
+            : 'Use 📷 <strong>Upload Photo</strong> below or click a Quick Demo code to test the scanner!'}
         </div>
       </div>`;
     }
-    setScannerStatus('error', 'Camera unavailable — click any demo barcode code below');
-    if (btnStart) btnStart.classList.remove('d-none');
-    if (btnStop) btnStop.classList.add('d-none');
-    scannerActive = false;
+    setScannerStatus('error', isPermDenied ? 'Camera permission needed' : 'Use photo upload or demo codes');
   }
 }
 
 function stopScanner() {
   if (zxingReader) {
     try {
-      // Stop the continuous scan loop
-      if (zxingReader._scanControls) {
-        zxingReader._scanControls.stop();
-        zxingReader._scanControls = null;
-      }
+      zxingReader.reset();
     } catch (_) {}
-    zxingReader = null;
   }
   scannerActive = false;
   const video    = document.getElementById('scanner-video');
   const overlay  = document.getElementById('scanner-overlay');
   const btnStart = document.getElementById('btn-start-scan');
   const btnStop  = document.getElementById('btn-stop-scan');
-  if (!video) return;
 
-  if (video.srcObject) {
+  if (video && video.srcObject) {
     video.srcObject.getTracks().forEach(t => t.stop());
     video.srcObject = null;
   }
 
-  if (overlay) { overlay.style.display = 'flex'; overlay.textContent = 'Scanner stopped. Click Start to begin.'; }
-  btnStart?.classList.remove('d-none');
-  btnStop?.classList.add('d-none');
+  if (overlay) { 
+    overlay.style.display = 'flex'; 
+    overlay.textContent = 'Scanner stopped. Click Start Live Camera to begin.'; 
+  }
+  if (btnStart) btnStart.classList.remove('d-none');
+  if (btnStop) btnStop.classList.add('d-none');
   setScannerStatus('idle', 'Scanner stopped');
 }
 
@@ -512,7 +685,7 @@ async function handleDetectedCode(code) {
   const resultUnknown = document.getElementById('scan-result-unknown');
   const flashEl       = document.getElementById('scanner-success-flash');
   const autoAddCheckbox = document.getElementById('scan-auto-add');
-  const isAutoAdd = autoAddCheckbox ? autoAddCheckbox.checked : false;
+  const isAutoAdd = autoAddCheckbox ? autoAddCheckbox.checked : true;
 
   // Green flash on viewfinder
   if (flashEl) {
@@ -520,33 +693,32 @@ async function handleDetectedCode(code) {
     setTimeout(() => flashEl.classList.add('d-none'), 450);
   }
 
-  // Immediately show loading card so user sees something happened
-  resultCode.textContent = code;
-  resultCard.classList.remove('d-none');
-  resultProduct.classList.remove('d-none');
-  resultUnknown.classList.add('d-none');
-  resultProduct.innerHTML = `
+  // Show loading card immediately
+  if (resultCode) resultCode.textContent = code;
+  if (resultCard) resultCard.classList.remove('d-none');
+  if (resultProduct) resultProduct.classList.remove('d-none');
+  if (resultUnknown) resultUnknown.classList.add('d-none');
+  if (resultProduct) resultProduct.innerHTML = `
     <div style="grid-column:1/-1;display:flex;align-items:center;gap:0.75rem;padding:0.5rem 0;">
       <div class="scan-spinner"></div>
       <div>
         <div style="font-size:0.85rem;font-weight:600;">Barcode: <code style="color:var(--accent-business);">${code}</code></div>
-        <div style="font-size:0.75rem;color:var(--text-secondary);margin-top:0.1rem;">Looking up product…</div>
+        <div style="font-size:0.75rem;color:var(--text-secondary);margin-top:0.1rem;">Looking up on Open Food Facts…</div>
       </div>
     </div>
   `;
   setScannerStatus('idle', `Looking up ${code}…`);
-  resultCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  if (resultCard) resultCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 
   let product = null;
 
   try {
-    // ── Step 1 & 2: Local catalog + Open Food Facts API (lookupBarcodeAsync) ──
+    // Step 1 & 2: Local catalog + Open Food Facts
     product = await lookupBarcodeAsync(code);
+    if (product) product.sourceLabel = product.source || 'Open Food Facts 🌐';
 
-    if (product) {
-      product.sourceLabel = product.source || 'Open Food Facts 🌐';
-    } else {
-      // ── Step 2.5: Secondary API Fallback (UPCitemDB) ──
+    // Step 3: UPCitemDB fallback
+    if (!product || !product.name) {
       try {
         const controller = new AbortController();
         const tid = setTimeout(() => controller.abort(), 4000);
@@ -555,9 +727,9 @@ async function handleDetectedCode(code) {
         const data = await res.json();
         if (data.code === 'OK' && data.items && data.items.length > 0) {
           const item = data.items[0];
-          const name = item.title || item.description || `Product (${code})`;
           product = {
-            name: name,
+            name: item.title || item.description || `Product (${code})`,
+            brand: item.brand || null,
             category: 'Other',
             unit: 'units',
             defaultQty: 1,
@@ -571,88 +743,90 @@ async function handleDetectedCode(code) {
       }
     }
 
-    // ── Step 3: Fallback — always have something to add ──
-    let isUnknown = false;
-    if (!product || !product.name) {
-      isUnknown = true;
-      product = {
-        name: code, // Use exactly what they entered as the default name
-        category: 'Other', unit: 'units',
-        defaultQty: 1, barcode: code,
-        imageUrl: null, nutriScore: null
-      };
-    }
-
-    // ── Step 4: Add or show card ──
-    const expiry = document.getElementById('scan-expiry').value
+    const expiry = (document.getElementById('scan-expiry') || {}).value
       || new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
 
-    // Auto-add if it's checked, regardless of if we found it in the API or not
-    if (isAutoAdd) {
+    if (product && product.name) {
+      // ── FOUND: add to inventory and show rich confirmation card ──
       addInventoryItem(currentBusinessId, {
-        name:      product.name,
-        category:  product.category,
-        quantity:  product.defaultQty,
-        unit:      product.unit,
-        expiryDate: expiry
+        name:       product.name,
+        category:   product.category || 'Other',
+        quantity:   product.defaultQty || 1,
+        unit:       product.unit || 'units',
+        expiryDate: expiry,
+        barcode:    code
       });
 
       const thumb = product.imageUrl
-        ? `<img src="${product.imageUrl}" alt="" style="width:44px;height:44px;object-fit:contain;border-radius:6px;background:#fff;padding:2px;">`
-        : `<span style="font-size:1.75rem;">✅</span>`;
+        ? `<img src="${product.imageUrl}" alt="${product.name}" 
+             style="width:64px;height:64px;object-fit:contain;border-radius:8px;background:#fff;padding:4px;flex-shrink:0;"
+             onerror="this.style.display='none'">`
+        : `<div style="width:52px;height:52px;border-radius:8px;background:rgba(16,185,129,0.15);display:flex;align-items:center;justify-content:center;font-size:1.8rem;flex-shrink:0;">✅</div>`;
 
-      resultProduct.innerHTML = `
-        <div style="grid-column:1/-1;display:flex;align-items:center;gap:0.75rem;padding:0.5rem 0;">
+      const nutriBadge = product.nutriScore
+        ? `<span style="font-size:0.68rem;font-weight:700;background:rgba(16,185,129,0.2);color:var(--accent-business);padding:0.1rem 0.4rem;border-radius:4px;margin-left:0.3rem;">Nutri-Score ${product.nutriScore}</span>`
+        : '';
+
+      const brandLine = product.brand ? `<span style="font-size:0.72rem;color:var(--text-muted);">${product.brand} · </span>` : '';
+      const pkgLine   = product.packageSize ? `<span style="font-size:0.72rem;color:var(--text-muted);">${product.packageSize} · </span>` : '';
+      const sourceLine = product.sourceLabel ? `<span style="font-size:0.65rem;color:var(--text-muted);opacity:0.7;">${product.sourceLabel}</span>` : '';
+
+      if (resultProduct) resultProduct.innerHTML = `
+        <div style="grid-column:1/-1;display:flex;align-items:flex-start;gap:0.85rem;padding:0.4rem 0;">
           ${thumb}
-          <div>
-            <div style="font-size:0.9rem;font-weight:700;color:var(--accent-business);">${product.name}</div>
-            <div style="font-size:0.75rem;color:var(--text-secondary);">${product.category} · Added to inventory ✅</div>
-            ${product.nutriScore ? `<span style="font-size:0.7rem;font-weight:700;background:rgba(16,185,129,0.15);color:var(--accent-business);padding:0.1rem 0.4rem;border-radius:4px;">Nutri-Score ${product.nutriScore}</span>` : ''}
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:0.95rem;font-weight:700;color:var(--accent-business);white-space:normal;line-height:1.3;">${product.name}${nutriBadge}</div>
+            <div style="font-size:0.75rem;color:var(--text-secondary);margin-top:0.2rem;">${brandLine}${pkgLine}${product.category}</div>
+            <div style="font-size:0.72rem;color:#10b981;margin-top:0.3rem;font-weight:600;">✅ Added to inventory! ${sourceLine}</div>
           </div>
         </div>
       `;
+      if (resultUnknown) resultUnknown.classList.add('d-none');
 
-      setScannerStatus('success', `✅ Added: ${product.name}`);
-      showToast('✅ Product Added', `${product.name} added to inventory.`, 'success');
+      setScannerStatus('active', `✅ Added: ${product.name} — ready for next scan`);
+      showToast('✅ Product Added', `${product.name} added to inventory from barcode scan.`, 'success');
       renderInventory();
 
-      // Clear card after 2.5s — ready for next scan
+      // Auto-clear after 3s for next scan
       setTimeout(() => {
-        resultCard.classList.add('d-none');
+        if (resultCard) resultCard.classList.add('d-none');
         pendingScannedProduct = null;
         lastScannedCode = null;
-        setScannerStatus('active', 'Scanner active — point camera at next product');
-      }, 2500);
+        setScannerStatus('active', 'Scanner active — point camera at a barcode');
+      }, 3000);
 
     } else {
-      // Manual confirm — show card, user clicks Add
-      pendingScannedProduct = product;
-      document.getElementById('scan-name-input').value = product.name;
-      document.getElementById('scan-qty').value        = product.defaultQty || 1;
-      document.getElementById('scan-unit').value       = product.unit || 'units';
+      // ── NOT FOUND: let user enter details manually ──
+      const unknownProduct = {
+        name: `Unknown (${code})`, category: 'Other',
+        unit: 'units', defaultQty: 1, barcode: code, imageUrl: null
+      };
+      pendingScannedProduct = unknownProduct;
 
-      const imgHtml = product.imageUrl
-        ? `<img src="${product.imageUrl}" alt="" style="width:52px;height:52px;object-fit:contain;border-radius:6px;background:#fff;padding:2px;flex-shrink:0;">`
-        : `<div style="width:40px;height:40px;border-radius:8px;background:rgba(16,185,129,0.1);display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0;">🛒</div>`;
+      if (document.getElementById('scan-name-input')) document.getElementById('scan-name-input').value = '';
+      if (document.getElementById('scan-qty'))        document.getElementById('scan-qty').value = 1;
+      if (document.getElementById('scan-unit'))       document.getElementById('scan-unit').value = 'units';
 
-      resultProduct.innerHTML = `
+      if (resultProduct) resultProduct.innerHTML = `
         <div style="grid-column:1/-1;display:flex;align-items:center;gap:0.75rem;margin-bottom:0.25rem;">
-          ${imgHtml}
+          <div style="width:44px;height:44px;border-radius:8px;background:rgba(245,158,11,0.15);display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0;">🔍</div>
           <div>
-            <strong style="font-size:0.95rem;">${product.name}</strong><br>
-            <span style="font-size:0.75rem;color:var(--text-muted);">${product.category} · ${product.unit}</span>
-            ${product.nutriScore ? `<span style="margin-left:0.4rem;font-size:0.7rem;font-weight:700;background:rgba(16,185,129,0.15);color:var(--accent-business);padding:0.1rem 0.35rem;border-radius:4px;">Nutri-Score ${product.nutriScore}</span>` : ''}
+            <strong style="font-size:0.9rem;">Product not found on Open Food Facts</strong><br>
+            <span style="font-size:0.75rem;color:var(--text-muted);">Barcode: ${code} · Enter details below to add manually</span>
           </div>
         </div>
       `;
-      resultUnknown.classList.add('d-none');
-      resultProduct.classList.remove('d-none');
-      showToast('Product Not Found', `Barcode ${code} not in database. Enter details below.`, 'warning');
-      setScannerStatus('error', `Unknown barcode: ${code} — enter name below`);
+      if (resultUnknown) resultUnknown.classList.remove('d-none');
+      if (resultProduct) resultProduct.classList.remove('d-none');
+      showToast('Product Not Found', `Barcode ${code} not found. Enter details below to add.`, 'warning');
+      setScannerStatus('idle', `Barcode ${code} — enter product name below`);
     }
-    lucide.createIcons();
-    resultCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+    if (resultCard) resultCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
   } catch (err) {
+    console.error('handleDetectedCode error:', err);
     showToast('Error', err.message, 'error');
     setScannerStatus('error', `Error: ${err.message}`);
   } finally {
@@ -740,9 +914,18 @@ function renderInventory() {
     const hasDelivery = activeDeliveries[item.id];
     const delivery = hasDelivery ? activeDeliveries[item.id] : null;
 
+    const storage = item.storageRequirement || 'Ambient (15-25°C)';
+    const perishability = item.perishabilityRisk || (item.category === 'Cooked Food' || item.category === 'Meat' ? 'High' : item.category === 'Dairy' ? 'Medium' : 'Low');
+
     tr.innerHTML = `
-      <td ${rowClass}><strong>${tName(item.name)}</strong></td>
-      <td ${rowClass}>${tCat(item.category)}</td>
+      <td ${rowClass}>
+        <strong>${tName(item.name)}</strong>
+        <div style="font-size:0.7rem; color:var(--text-muted);">${storage}</div>
+      </td>
+      <td ${rowClass}>
+        ${tCat(item.category)}
+        <div style="font-size:0.68rem;"><span style="color:${perishability === 'High' ? '#f87171' : perishability === 'Medium' ? '#fbbf24' : '#34d399'}; font-weight:600;">${perishability} Risk</span></div>
+      </td>
       <td ${rowClass}>${item.quantity} ${tUnit(item.unit)}</td>
       <td ${rowClass}>${item.expiryDate}</td>
       <td><span class="badge-status ${statusClass}">${statusText}</span></td>

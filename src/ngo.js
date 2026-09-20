@@ -6,7 +6,7 @@ import {
   lookupBarcodeAsync
 } from './db.js';
 import { showToast } from './toast.js';
-import { t, tCat, tUnit, tName } from './i18n.js';
+import { t, tCat, tUnit, tName, tBizName } from './i18n.js';
 
 let activeImpactChart = null;
 let currentNgoId = null;
@@ -142,6 +142,7 @@ function initNgoScanner() {
 
   const manualInput = document.getElementById('ngo-scan-manual-code');
   const manualBtn = document.getElementById('ngo-scan-manual-btn');
+  const fileInput = document.getElementById('ngo-file-input');
 
   if (!scannerBtn || !modal) return;
 
@@ -176,10 +177,6 @@ function initNgoScanner() {
 
   if (startBtn) {
     startBtn.addEventListener('click', async () => {
-      if (!codeReader) {
-        showToast('Scanner Notice', 'Webcam library loading... You can use direct barcode input below!', 'warning');
-        return;
-      }
       try {
         if (statusDot) statusDot.className = 'scanner-dot active';
         if (statusText) statusText.textContent = 'Scanning camera feed…';
@@ -187,20 +184,77 @@ function initNgoScanner() {
         startBtn.classList.add('d-none');
         
         const deviceId = cameraSelect && cameraSelect.value ? cameraSelect.value : null;
-        await codeReader.decodeFromVideoDevice(deviceId, videoEl, (result, err) => {
-          if (result) {
-            codeReader.reset();
-            if (stopBtn) stopBtn.classList.add('d-none');
-            if (startBtn) startBtn.classList.remove('d-none');
-            handleNgoScanResult(result.getText());
-          }
-        });
+        if (codeReader) {
+          await codeReader.decodeFromVideoDevice(deviceId, videoEl, (result, err) => {
+            if (result) {
+              codeReader.reset();
+              if (stopBtn) stopBtn.classList.add('d-none');
+              if (startBtn) startBtn.classList.remove('d-none');
+              handleNgoScanResult(result.getText());
+            }
+          });
+        } else {
+          throw new Error('ZXing scanner not loaded');
+        }
       } catch (e) {
         console.error('Failed to start camera scanner:', e);
+        if (stopBtn) stopBtn.classList.add('d-none');
+        if (startBtn) startBtn.classList.remove('d-none');
         if (statusDot) statusDot.className = 'scanner-dot error';
-        if (statusText) statusText.textContent = 'Camera unavailable or blocked. Use manual scan input below!';
-        showToast('Camera Notice', 'Camera access blocked or unavailable. Use quick barcode input below!', 'warning');
+        if (statusText) statusText.textContent = 'Live camera stream unavailable on this device. Upload photo or use Quick Test below!';
+        showToast('Camera Stream Notice', 'Live camera stream unavailable. You can upload a photo of a barcode or use Quick Test below!', 'info');
       }
+    });
+  }
+
+  // Handle Photo / Image Upload barcode decoding
+  if (fileInput) {
+    fileInput.addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      if (statusDot) statusDot.className = 'scanner-dot active';
+      if (statusText) statusText.textContent = 'Processing uploaded barcode image…';
+
+      const imgUrl = URL.createObjectURL(file);
+      let decodedText = null;
+
+      if ('BarcodeDetector' in window) {
+        try {
+          const detector = new window.BarcodeDetector({ formats: ['qr_code', 'ean_13', 'ean_8', 'code_128', 'upc_a', 'upc_e'] });
+          const imgElement = new Image();
+          imgElement.src = imgUrl;
+          await imgElement.decode();
+          const results = await detector.detect(imgElement);
+          if (results && results.length > 0) {
+            decodedText = results[0].rawValue;
+          }
+        } catch (err) {
+          console.warn('Native BarcodeDetector notice:', err);
+        }
+      }
+
+      if (!decodedText && codeReader) {
+        try {
+          const result = await codeReader.decodeFromImageUrl(imgUrl);
+          if (result) decodedText = result.getText();
+        } catch (err) {
+          console.warn('ZXing image decode notice:', err);
+        }
+      }
+
+      URL.revokeObjectURL(imgUrl);
+
+      if (decodedText) {
+        if (statusDot) statusDot.className = 'scanner-dot idle';
+        if (statusText) statusText.textContent = `Barcode detected: ${decodedText}`;
+        handleNgoScanResult(decodedText);
+      } else {
+        if (statusDot) statusDot.className = 'scanner-dot error';
+        if (statusText) statusText.textContent = 'Could not detect barcode from image. Try Quick Test below!';
+        showToast('Scan Notice', 'Barcode not detected in image. Try typing code or using Quick Test buttons!', 'warning');
+      }
+      fileInput.value = '';
     });
   }
 
@@ -353,12 +407,20 @@ function renderDonationFeed() {
       expText = `${t('warning')}: ${daysLeft}d`;
     }
 
+    const isCookedFood = don.category === 'Cooked Food';
+    const cookedBadge = isCookedFood 
+      ? `<div style="margin-top:0.4rem; font-size:0.7rem; background:rgba(245,158,11,0.15); color:#fbbf24; border:1px solid rgba(245,158,11,0.3); padding:0.2rem 0.5rem; border-radius:6px; font-weight:600; display:inline-flex; align-items:center; gap:0.3rem;">
+           <span>🍲 Cooked Food Handling Certified (Safe &lt;4h window)</span>
+         </div>`
+      : '';
+
     card.innerHTML = `
       <div>
         <div class="don-card-header">
           <div>
             <span class="don-card-cat">${tCat(don.category)}</span>
             <h4 class="don-card-title">${tName(don.name)}</h4>
+            ${cookedBadge}
           </div>
           <span class="badge-status ${expBadgeClass}">${expText}</span>
         </div>
@@ -370,7 +432,7 @@ function renderDonationFeed() {
           </div>
           <div class="don-detail-item">
             <i data-lucide="building"></i>
-            <span>${t('from')}: <strong>${don.businessName}</strong></span>
+            <span>${t('from')}: <strong>${tBizName(don.businessName)}</strong></span>
           </div>
           <div class="don-detail-item">
             <i data-lucide="navigation"></i>
@@ -597,7 +659,7 @@ function renderActiveClaimsList() {
         </div>
 
         <div style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.5rem;">
-          <p>${t('pickupSpot')}: <strong>${c.businessName || 'N/A'}</strong></p>
+          <p>${t('pickupSpot')}: <strong>${tBizName(c.businessName) || 'N/A'}</strong></p>
           <p>${t('quantityClaimed')}: <strong>${c.quantity} ${tUnit(c.unit)}</strong></p>
           <p>${t('assignedDriver')}: <strong style="color:var(--accent-ngo);">🚴 ${c.assignedDriverName || 'Ramesh Kumar'}</strong> (📞 ${c.assignedDriverContact || '555-9011'})</p>
           <p>${t('vehicle')}: <strong>${c.assignedDriverVehicle || c.transportType || 'Motorbike'}</strong></p>

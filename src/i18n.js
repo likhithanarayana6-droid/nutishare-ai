@@ -22,6 +22,7 @@ export const translations = {
     oldAgeHome: "Old Age Home",
     deliveryPartner: "Delivery Partner",
     signOut: "Sign Out",
+    installApp: "Install App",
     welcome: "Welcome",
     dashboard: "Dashboard",
     overview: "Overview",
@@ -142,7 +143,31 @@ export const translations = {
     ngoSub_studentCommunity: "Browse available surplus food for your student community and get it delivered to your hostel.",
     ngoSub_migrantWorkers: "Browse surplus food donations available for your workers community and schedule delivery.",
     ngoSub_disabilityCenter: "Browse available food donations for your care center and coordinate deliveries easily.",
-    ngoSub_charityShelter: "Browse available donations for your shelter residents and track deliveries in real time."
+    ngoSub_charityShelter: "Browse available donations for your shelter residents and track deliveries in real time.",
+    heroEngineTag: "⚡ AI-Powered Food Waste Redistribution Engine",
+    heroTitle: "Zero Food Waste.",
+    heroSubtitle: "Zero Hunger.",
+    heroBrandSub: "NutriShare AI connects supermarkets, restaurants, and hotels directly with local NGOs, shelters, and families in need using predictive AI analytics.",
+    foodRescued: "Food Rescued",
+    co2Prevented: "CO₂ Prevented",
+    aiMatchRate: "AI Match Rate",
+    featurePredictive: "Predictive Expiry Analytics",
+    featureBarcode: "Instant Barcode Scanner",
+    featureTracking: "Live Delivery Tracking",
+    featureMultiLang: "Multilingual Support (8 Languages)",
+    emailAddress: "Email Address",
+    password: "Password",
+    orgName: "Organization / Business Name",
+    govtId: "Government ID Number (Aadhaar / National ID)",
+    licenseNo: "Driving License / Vehicle Reg No.",
+    logisticsType: "Vehicle Logistics Type",
+    adminWelcome: "Welcome back, Admin 👋",
+    businesses: "Businesses",
+    ngosRecipients: "NGOs / Recipients",
+    availableNow: "Available Now",
+    claimedDonations: "Claimed Donations",
+    inventoryItems: "Inventory Items",
+    platformActivity: "⚡ Platform Activity",
   },
   te: {
     appName: "న్యూట్రిషేర్ AI",
@@ -164,6 +189,7 @@ export const translations = {
     oldAgeHome: "వృద్ధాశ్రమం",
     deliveryPartner: "డెలివరీ పార్ట్‌నర్",
     signOut: "లాగ్ అవుట్",
+    installApp: "యాప్ ఇన్‌స్టాల్ చేయండి",
     welcome: "స్వాగతం",
     dashboard: "డాష్‌బోర్డ్",
     overview: "సమీక్ష",
@@ -284,7 +310,31 @@ export const translations = {
     ngoSub_studentCommunity: "విద్యార్థి సంఘం కోసం అందుబాటులో ఉన్న మిగులు ఆహారాన్ని చూడండి మరియు హాస్టల్‌కు డెలివరీ పొందండి.",
     ngoSub_migrantWorkers: "కార్మికుల సంఘం కోసం అందుబాటులో ఉన్న విరాళాలను చూడండి మరియు డెలివరీని షెడ్యూల్ చేయండి.",
     ngoSub_disabilityCenter: "సంరక్షణ కేంద్రం కోసం అందుబాటులో ఉన్న విరాళాలను చూడండి మరియు డెలివరీలను సులభంగా సమన్వయం చేయండి.",
-    ngoSub_charityShelter: "షెల్టర్ నివాసితుల కోసం అందుబాటులో ఉన్న విరాళాలను చూడండి మరియు ప్రత్యక్షంగా ట్రాక్ చేయండి."
+    ngoSub_charityShelter: "షెల్టర్ నివాసితుల కోసం అందుబాటులో ఉన్న విరాళాలను చూడండి మరియు ప్రత్యక్షంగా ట్రాక్ చేయండి.",
+    heroEngineTag: "⚡ AI-ఆధారిత ఆహార వ్యర్థ పునర్విభజన ఇంజిన్",
+    heroTitle: "శూన్య ఆహార వ్యర్థం.",
+    heroSubtitle: "శూన్య ఆకలి.",
+    heroBrandSub: "న్యూట్రిషేర్ AI సూపర్‌మార్కెట్‌లు, రెస్టారెంట్‌లు మరియు హోటళ్లను నేరుగా స్థానిక స్వచ్ఛంద సంస్థలు మరియు కుటుంబాలతో అనుసంధానిస్తుంది.",
+    foodRescued: "రక్షించిన ఆహారం",
+    co2Prevented: "తగ్గించిన CO₂",
+    aiMatchRate: "AI మ్యాచింగ్ రేటు",
+    featurePredictive: "గడువు ముగింపు AI విశ్లేషణ",
+    featureBarcode: "తక్షణ బార్‌కోడ్ స్కానర్",
+    featureTracking: "లైవ్ డెలివరీ ట్రాకింగ్",
+    featureMultiLang: "బహుభాషా సహకారం (8 భాషలు)",
+    emailAddress: "ఈమెయిల్ చిరునామా",
+    password: "పాస్‌వర్డ్",
+    orgName: "సంస్థ / వ్యాపారం పేరు",
+    govtId: "ప్రభుత్వ గుర్తింపు సంఖ్య (ఆధార్ / జాతీయ ID)",
+    licenseNo: "డ్రైవింగ్ లైసెన్స్ / వాహన రిజిస్ట్రేషన్ సంఖ్య",
+    logisticsType: "వాహన లాజిస్టిక్స్ రకం",
+    adminWelcome: "తిరిగి స్వాగతం, అడ్మిన్ 👋",
+    businesses: "వ్యాపారాలు",
+    ngosRecipients: "NGOలు / గ్రహీతలు",
+    availableNow: "ఇప్పుడు అందుబాటులో ఉంది",
+    claimedDonations: "క్లెయిమ్ చేసిన విరాళాలు",
+    inventoryItems: "ఇన్వెంటరీ వస్తువులు",
+    platformActivity: "⚡ ప్లాట్‌ఫారమ్ కార్యాచరణ",
   },
   hi: {
     appName: "न्यूट्रीशेयर AI",
@@ -306,6 +356,7 @@ export const translations = {
     oldAgeHome: "वृद्धाश्रम",
     deliveryPartner: "डिलीवरी पार्टनर",
     signOut: "साइन आउट",
+    installApp: "ऐप इंस्टॉल करें",
     welcome: "स्वागत है",
     dashboard: "डैशबोर्ड",
     overview: "अवलोकन",
@@ -426,7 +477,31 @@ export const translations = {
     ngoSub_studentCommunity: "अपने छात्र समुदाय के लिए उपलब्ध भोजन देखें और अपने हॉस्टल में डिलीवरी पाएं।",
     ngoSub_migrantWorkers: "अपने श्रमिक समुदाय के लिए उपलब्ध अतिरिक्त भोजन दान देखें और डिलीवरी का समय निर्धारित करें।",
     ngoSub_disabilityCenter: "अपने देखभाल केंद्र के लिए उपलब्ध भोजन दान देखें और आसानी से डिलीवरी का समन्वय करें।",
-    ngoSub_charityShelter: "अपने आश्रय स्थल के निवासियों के लिए उपलब्ध दान देखें और वास्तविक समय में डिलीवरी ट्रैक करें।"
+    ngoSub_charityShelter: "अपने आश्रय स्थल के निवासियों के लिए उपलब्ध दान देखें और वास्तविक समय में डिलीवरी ट्रैक करें।",
+    heroEngineTag: "⚡ एआई-संचालित खाद्य अपशिष्ट पुनर्वितरण इंजन",
+    heroTitle: "शून्य खाद्य अपशिष्ट।",
+    heroSubtitle: "शून्य भूख।",
+    heroBrandSub: "न्यूट्रीशेयर एआई सुपरमार्केट, रेस्तरां और होटलों को सीधे स्थानीय एनजीओ, आश्रयों और परिवारों से जोड़ता है।",
+    foodRescued: "बचाया गया भोजन",
+    co2Prevented: "रोका गया CO₂",
+    aiMatchRate: "एआई मिलान दर",
+    featurePredictive: "अनुमानित समाप्ति विश्लेषण",
+    featureBarcode: "त्वरित बारकोड स्कैनर",
+    featureTracking: "लाइव डिलीवरी ट्रैकिंग",
+    featureMultiLang: "बहुभाषी सहायता (8 भाषाएं)",
+    emailAddress: "ईमेल पता",
+    password: "पासवर्ड",
+    orgName: "संस्था / व्यवसाय का नाम",
+    govtId: "सरकारी पहचान संख्या (आधार / राष्ट्रीय आईडी)",
+    licenseNo: "ड्राइविंग लाइसेंस / वाहन पंजीकरण संख्या",
+    logisticsType: "वाहन लॉजिस्टिक्स प्रकार",
+    adminWelcome: "वापसी पर स्वागत है, व्यवस्थापक 👋",
+    businesses: "व्यवसाय",
+    ngosRecipients: "एनजीओ / प्राप्तकर्ता",
+    availableNow: "अब उपलब्ध है",
+    claimedDonations: "दावा किए गए दान",
+    inventoryItems: "इन्वेंटरी आइटम",
+    platformActivity: "⚡ प्लेटफ़ॉर्म गतिविधि",
   },
   ta: {
     appName: "நியூட்ரிஷேர் AI",
@@ -448,6 +523,7 @@ export const translations = {
     oldAgeHome: "முதியோர் இல்லம்",
     deliveryPartner: "டெலிவரி பார்ட்னர்",
     signOut: "வெளியேறு",
+    installApp: "செயலியை நிறுவு",
     welcome: "வரவேற்கிறோம்",
     dashboard: "டாஷ்போர்டு",
     overview: "மேலோட்டம்",
@@ -568,7 +644,31 @@ export const translations = {
     ngoSub_studentCommunity: "மாணவர் சமூகத்திற்காக கிடைக்கும் உபரி உணவை பார்த்து விடுதிக்கு டெலிவரி பெறுங்கள்.",
     ngoSub_migrantWorkers: "தொழிலாளர் சமூகத்திற்கு கிடைக்கும் உணவு நன்கொடைகளைப் பார்த்து டெலிவரி திட்டமிடுங்கள்.",
     ngoSub_disabilityCenter: "பராமரிப்பு மையத்திற்கான உணவு நன்கொடைகளைப் பார்த்து எளிதாக டெலிவரி ஒருங்கிணைக்கவும்.",
-    ngoSub_charityShelter: "காப்பக நிவாசிகளுக்காக கிடைக்கும் நன்கொடைகளைப் பார்த்து நிகழ்நேரத்தில் டிராக் செய்யுங்கள்."
+    ngoSub_charityShelter: "காப்பக நிவாசிகளுக்காக கிடைக்கும் நன்கொடைகளைப் பார்த்து நிகழ்நேரத்தில் டிராக் செய்யுங்கள்.",
+    heroEngineTag: "⚡ AI-இயங்கும் உணவு விரய மறுபகிர்வு இயந்திரம்",
+    heroTitle: "பூஜ்ஜிய உணவு விரயம்.",
+    heroSubtitle: "பூஜ்ஜிய பசி.",
+    heroBrandSub: "நியூட்ரிஷேர் AI சூப்பர் மார்க்கெட்டுகள் மற்றும் உணவகங்களை நேரடியாக உள்ளூர் தொண்டு நிறுவனங்களுடன் இணைக்கிறது.",
+    foodRescued: "மீட்கப்பட்ட உணவு",
+    co2Prevented: "தடுக்கப்பட்ட CO₂",
+    aiMatchRate: "AI பொருத்தம் விகிதம்",
+    featurePredictive: "கணிப்பு காலாவதி பகுப்பாய்வு",
+    featureBarcode: "உடனடி பார்கோடு ஸ்கேனர்",
+    featureTracking: "நேரலை டெலிவரி கண்காணிப்பு",
+    featureMultiLang: "பன்மொழி ஆதரவு (8 மொழிகள்)",
+    emailAddress: "மின்னஞ்சல் முகவரி",
+    password: "கடவுச்சொல்",
+    orgName: "நிறுவனம் / வணிகத்தின் பெயர்",
+    govtId: "அரசு அடையாள எண் (ஆதார் / தேசிய ஐடி)",
+    licenseNo: "ஓட்டுநர் உரிமம் / வாகனப் பதிவு எண்",
+    logisticsType: "வாகன தளவாட வகை",
+    adminWelcome: "மீண்டும் வருக, நிர்வாகி 👋",
+    businesses: "வணிகங்கள்",
+    ngosRecipients: "தொண்டு நிறுவனங்கள் / பெறுநர்கள்",
+    availableNow: "இப்போது கிடைக்கிறது",
+    claimedDonations: "கோரப்பட்ட நன்கொடைகள்",
+    inventoryItems: "பட்டியல் பொருட்கள்",
+    platformActivity: "⚡ இயங்குதள செயல்பாடு",
   },
   kn: {
     appName: "ನ್ಯೂಟ್ರಿಶೇರ್ AI",
@@ -590,6 +690,7 @@ export const translations = {
     oldAgeHome: "ವೃದ್ಧಾಶ್ರಮ",
     deliveryPartner: "ಡೆಲಿವರಿ ಪಾಲುದಾರ",
     signOut: "ಸೈನ್ ಔಟ್",
+    installApp: "ಅಪ್ಲಿಕೇಶನ್ ಸ್ಥಾಪಿಸಿ",
     welcome: "ಸ್ವಾಗತ",
     dashboard: "ಡ್ಯಾಶ್‌ಬೋರ್ಡ್",
     overview: "ಅವಲೋಕನ",
@@ -710,7 +811,31 @@ export const translations = {
     ngoSub_studentCommunity: "ವಿದ್ಯಾರ್ಥಿ ಸಮುದಾಯಕ್ಕೆ ಲಭ್ಯವಿರುವ ಆಹಾರವನ್ನು ವೀಕ್ಷಿಸಿ ಮತ್ತು ವಸತಿನಿಲಯಕ್ಕೆ ಡೆಲಿವರಿ ಪಡೆಯಿರಿ.",
     ngoSub_migrantWorkers: "ಕಾರ್ಮಿಕರ ಸಮುದಾಯಕ್ಕಾಗಿ ಲಭ್ಯವಿರುವ ಆಹಾರ ದಾನಗಳನ್ನು ವೀಕ್ಷಿಸಿ ಮತ್ತು ಡೆಲಿವರಿ ನಿಗದಿಪಡಿಸಿ.",
     ngoSub_disabilityCenter: "ಆರೈಕೆ ಕೇಂದ್ರಕ್ಕಾಗಿ ಲಭ್ಯವಿರುವ ಆಹಾರ ದಾನಗಳನ್ನು ವೀಕ್ಷಿಸಿ ಮತ್ತು ಡೆಲಿವರಿಯನ್ನು ಸುಲಭವಾಗಿ ಸಂಘಟಿಸಿ.",
-    ngoSub_charityShelter: "ಆಶ್ರಯ ನಿವಾಸಿಗಳಿಗಾಗಿ ಲಭ್ಯವಿರುವ ದಾನಗಳನ್ನು ವೀಕ್ಷಿಸಿ ಮತ್ತು ರಿಯಲ್-ಟೈಮ್‌ನಲ್ಲಿ ಟ್ರ್ಯಾಕ್ ಮಾಡಿ."
+    ngoSub_charityShelter: "ಆಶ್ರಯ ನಿವಾಸಿಗಳಿಗಾಗಿ ಲಭ್ಯವಿರುವ ದಾನಗಳನ್ನು ವೀಕ್ಷಿಸಿ ಮತ್ತು ರಿಯಲ್-ಟೈಮ್‌ನಲ್ಲಿ ಟ್ರ್ಯಾಕ್ ಮಾಡಿ.",
+    heroEngineTag: "⚡ AI-ಚಾಲಿತ ಆಹಾರ ತ್ಯಾಜ್ಯ ಮರುಹಂಚಿಕೆ ಎಂಜಿನ್",
+    heroTitle: "ಶೂನ್ಯ ಆಹಾರ ತ್ಯಾಜ್ಯ.",
+    heroSubtitle: "ಶೂನ್ಯ ಹಸಿವು.",
+    heroBrandSub: "ನ್ಯೂಟ್ರಿಶೇರ್ AI ಸೂಪರ್ ಮಾರ್ಕೆಟ್‌ಗಳು ಮತ್ತು ರೆಸ್ಟೋರೆಂಟ್‌ಗಳನ್ನು ಸ್ಥಳೀಯ NGO ಗಳು ಮತ್ತು ಕುಟುಂಬಗಳೊಂದಿಗೆ ನೇರವಾಗಿ ಸಂಪರ್ಕಿಸುತ್ತದೆ.",
+    foodRescued: "ರಕ್ಷಿಸಿದ ಆಹಾರ",
+    co2Prevented: "ತಡೆಗಟ್ಟಿದ CO₂",
+    aiMatchRate: "AI ಪಂದ್ಯದ ದರ",
+    featurePredictive: "ಮುನ್ಸೂಚನೆಯ ಮುಕ್ತಾಯದ ವಿಶ್ಲೇಷಣೆ",
+    featureBarcode: "ತ್ವರಿತ ಬಾರ್‌ಕೋಡ್ ಸ್ಕ್ಯಾನರ್",
+    featureTracking: "ಲೈವ್ ಡೆಲಿವರಿ ಟ್ರ್ಯಾಕಿಂಗ್",
+    featureMultiLang: "ಬಹುಭಾಷಾ ಬೆಂಬಲ (8 ಭಾಷೆಗಳು)",
+    emailAddress: "ಇಮೇಲ್ ವಿಳಾಸ",
+    password: "ಪಾಸ್‌ವರ್ಡ್",
+    orgName: "ಸಂಸ್ಥೆ / ವ್ಯಾಪಾರದ ಹೆಸರು",
+    govtId: "ಸರ್ಕಾರಿ ಗುರುತಿನ ಸಂಖ್ಯೆ (ಆಧಾರ್ / ರಾಷ್ಟ್ರೀಯ ID)",
+    licenseNo: "ಚಾಲನಾ ಪರವಾನಗಿ / ವಾಹನ ನೋಂದಣಿ ಸಂಖ್ಯೆ",
+    logisticsType: "ವಾಹನ ಲಾಜಿಸ್ಟಿಕ್ಸ್ ಪ್ರಕಾರ",
+    adminWelcome: "ಮರಳಿ ಸ್ವಾಗತ, ನಿರ್ವಾಹಕ 👋",
+    businesses: "ವ್ಯವಹಾರಗಳು",
+    ngosRecipients: "ಎನ್‌ಜಿಒಗಳು / ಸ್ವೀಕರಿಸುವವರು",
+    availableNow: "ಈಗ ಲಭ್ಯವಿದೆ",
+    claimedDonations: "ಕ್ಲೈಮ್ ಮಾಡಿದ ದೇಣಿಗೆಗಳು",
+    inventoryItems: "ದಾಸ್ತಾನು ವಸ್ತುಗಳು",
+    platformActivity: "⚡ ಪ್ಲಾಟ್‌ಫಾರ್ಮ್ ಚಟುವಟಿಕೆ",
   },
   ml: {
     appName: "ന്യൂട്രിഷെയർ AI",
@@ -732,6 +857,7 @@ export const translations = {
     oldAgeHome: "വൃദ്ധസദനം",
     deliveryPartner: "ഡെലിവറി പങ്കാളി",
     signOut: "സൈൻ ഔട്ട്",
+    installApp: "ആപ്പ് ഇൻസ്റ്റാൾ ചെയ്യുക",
     welcome: "സ്വാഗതം",
     dashboard: "ഡാഷ്‌ബോർഡ്",
     overview: "അവലോകനം",
@@ -852,7 +978,31 @@ export const translations = {
     ngoSub_studentCommunity: "വിദ്യാർത്ഥി സമൂഹത്തിനായി ലഭ്യമായ ഭക്ഷണം കണ്ട് ഹോസ്റ്റലിലേക്ക് ഡെലിവറി നേടുക.",
     ngoSub_migrantWorkers: "തൊഴിലാളി സമൂഹത്തിനായി ലഭ്യമായ ഭക്ഷണ സംഭാവനകൾ കണ്ട് ഡെലിവറി ഷെഡ്യൂൾ ചെയ്യുക.",
     ngoSub_disabilityCenter: "പരിചരണ കേന്ദ്രത്തിനായി ലഭ്യമായ ഭക്ഷണ സംഭാവനകൾ കണ്ട് ഡെലിവറി എളുപ്പത്തിൽ ഏകോപിപ്പിക്കുക.",
-    ngoSub_charityShelter: "അഭയകേന്ദ്ര നിവാസികൾക്കായി ലഭ്യമായ സംഭാവനകൾ കണ്ട് തത്സമയം ട്രാക്ക് ചെയ്യുക."
+    ngoSub_charityShelter: "അഭയകേന്ദ്ര നിവാസികൾക്കായി ലഭ്യമായ സംഭാവനകൾ കണ്ട് തത്സമയം ട്രാക്ക് ചെയ്യുക.",
+    heroEngineTag: "⚡ AI-അധിഷ്ഠിത ഭക്ഷണ മാലിന്യ പുനർവിതരണ എഞ്ചിൻ",
+    heroTitle: "പൂജ്യം ഭക്ഷണ മാലിന്യം.",
+    heroSubtitle: "പൂജ്യം പട്ടിണി.",
+    heroBrandSub: "ന്യൂട്രിഷെയർ AI സൂപ്പർമാർക്കറ്റുകളെയും റെസ്റ്റോറന്റുകളെയും പ്രാദേശിക NGO-കളുമായി നേരിട്ട് ബന്ധിപ്പിക്കുന്നു.",
+    foodRescued: "രക്ഷപ്പെടുത്തിയ ഭക്ഷണം",
+    co2Prevented: "തടഞ്ഞ CO₂",
+    aiMatchRate: "AI മാച്ച് നിരക്ക്",
+    featurePredictive: "പ്രവചന കാലഹരണ വിശകലനം",
+    featureBarcode: "തൽക്ഷണ ബാർകോഡ് സ്കാനർ",
+    featureTracking: "തത്സമയ ഡെലിവറി ട്രാക്കിംഗ്",
+    featureMultiLang: "ബഹുഭാഷാ പിന്തുണ (8 ഭാഷകൾ)",
+    emailAddress: "ഇമെയിൽ വിലാസം",
+    password: "പാസ്‌വേഡ്",
+    orgName: "സ്ഥാപനത്തിന്റെ / ബിസിനസിന്റെ പേര്",
+    govtId: "ഗവൺമെന്റ് തിരിച്ചറിയൽ നമ്പർ (ആധാർ / നാഷണൽ ഐഡി)",
+    licenseNo: "ഡ്രൈവിംഗ് ലൈസൻസ് / വാഹന രജിസ്ട്രേഷൻ നമ്പർ",
+    logisticsType: "വാഹന ലോജിസ്റ്റിക്സ് തരം",
+    adminWelcome: "തിരികെ സ്വാഗതം, അഡ്മിൻ 👋",
+    businesses: "ബിസിനസുകൾ",
+    ngosRecipients: "എൻജിഒകൾ / സ്വീകർത്താക്കൾ",
+    availableNow: "ഇപ്പോൾ ലഭ്യമാണ്",
+    claimedDonations: "അവകാശപ്പെട്ട സംഭാവനകൾ",
+    inventoryItems: "ഇൻവെന്ററി ഇനങ്ങൾ",
+    platformActivity: "⚡ പ്ലാറ്റ്ഫോം പ്രവർത്തനം",
   },
   es: {
     appName: "NutriShare AI",
@@ -874,6 +1024,7 @@ export const translations = {
     oldAgeHome: "Asilo de ancianos",
     deliveryPartner: "Socio de entrega",
     signOut: "Cerrar sesión",
+    installApp: "Instalar App",
     welcome: "Bienvenido",
     dashboard: "Panel",
     overview: "Resumen",
@@ -994,7 +1145,31 @@ export const translations = {
     ngoSub_studentCommunity: "Explore alimentos excedentes para su comunidad estudiantil y recíbalos en su residencia.",
     ngoSub_migrantWorkers: "Explore donaciones de alimentos para su comunidad de trabajadores y programe la entrega.",
     ngoSub_disabilityCenter: "Explore donaciones de alimentos para su centro de atención y coordine entregas fácilmente.",
-    ngoSub_charityShelter: "Explore donaciones disponibles para los residentes de su refugio y realice un seguimiento en tiempo real."
+    ngoSub_charityShelter: "Explore donaciones disponibles para los residentes de su refugio y realice un seguimiento en tiempo real.",
+    heroEngineTag: "⚡ Motor de redistribución de alimentos con IA",
+    heroTitle: "Cero Desperdicio de Alimentos.",
+    heroSubtitle: "Cero Hambre.",
+    heroBrandSub: "NutriShare AI conecta supermercados, restaurantes y hoteles directamente con ONGs locales, refugios y familias necesitadas usando análisis predictivo de IA.",
+    foodRescued: "Comida Rescatada",
+    co2Prevented: "CO₂ Prevenido",
+    aiMatchRate: "Tasa de Coincidencia IA",
+    featurePredictive: "Análisis Predictivo de Caducidad",
+    featureBarcode: "Escáner de Código de Barras Instantáneo",
+    featureTracking: "Rastreo de Entrega en Vivo",
+    featureMultiLang: "Soporte Multilingüe (8 Idiomas)",
+    emailAddress: "Correo Electrónico",
+    password: "Contraseña",
+    orgName: "Nombre de la Organización / Empresa",
+    govtId: "Número de identificación gubernamental",
+    licenseNo: "Licencia de conducir / Registro vehicular",
+    logisticsType: "Tipo de logística vehicular",
+    adminWelcome: "Bienvenido de nuevo, Administrador 👋",
+    businesses: "Negocios",
+    ngosRecipients: "ONGs / Beneficiarios",
+    availableNow: "Disponible Ahora",
+    claimedDonations: "Donaciones Reclamadas",
+    inventoryItems: "Artículos de Inventario",
+    platformActivity: "⚡ Actividad de la Plataforma",
   },
   fr: {
     appName: "NutriShare AI",
@@ -1016,6 +1191,7 @@ export const translations = {
     oldAgeHome: "Maison de retraite",
     deliveryPartner: "Partenaire de livraison",
     signOut: "Se déconnecter",
+    installApp: "Installer l'App",
     welcome: "Bienvenue",
     dashboard: "Tableau de bord",
     overview: "Aperçu",
@@ -1136,7 +1312,31 @@ export const translations = {
     ngoSub_studentCommunity: "Parcourez les surplus d'aliments pour votre communauté étudiante et faites-vous livrer à votre résidence.",
     ngoSub_migrantWorkers: "Parcourez les dons d'aliments pour votre communauté de travailleurs et planifiez la livraison.",
     ngoSub_disabilityCenter: "Parcourez les dons d'aliments pour votre centre de soins et coordonnez facilement les livraisons.",
-    ngoSub_charityShelter: "Parcourez les dons disponibles pour les résidents de votre refuge et suivez les livraisons en temps réel."
+    ngoSub_charityShelter: "Parcourez les dons disponibles pour les résidents de votre refuge et suivez les livraisons en temps réel.",
+    heroEngineTag: "⚡ Moteur de redistribution alimentaire propulsé par l'IA",
+    heroTitle: "Zéro Gaspillage Alimentaire.",
+    heroSubtitle: "Zéro Faim.",
+    heroBrandSub: "NutriShare AI connecte supermarchés, restaurants et hôtels directement avec les ONG locales, refuges et familles dans le besoin grâce à l'IA prédictive.",
+    foodRescued: "Nourriture Sauvée",
+    co2Prevented: "CO₂ Évité",
+    aiMatchRate: "Taux de Correspondance IA",
+    featurePredictive: "Analyse Prédictive de Péremption",
+    featureBarcode: "Scanner de Code-Barres Instantané",
+    featureTracking: "Suivi de Livraison en Direct",
+    featureMultiLang: "Support Multilingue (8 Langues)",
+    emailAddress: "Adresse E-mail",
+    password: "Mot de Passe",
+    orgName: "Nom de l'Organisation / Entreprise",
+    govtId: "Numéro d'identification gouvernementale",
+    licenseNo: "Permis de conduire / Immatriculation véhicule",
+    logisticsType: "Type de logistique véhicule",
+    adminWelcome: "Bon retour, Administrateur 👋",
+    businesses: "Entreprises",
+    ngosRecipients: "ONG / Bénéficiaires",
+    availableNow: "Disponible Maintenant",
+    claimedDonations: "Dons Réclamés",
+    inventoryItems: "Articles d'Inventaire",
+    platformActivity: "⚡ Activité de la Plateforme",
   }
 };
 
@@ -1256,30 +1456,111 @@ export function tName(name) {
   return map[name] || name;
 }
 
+// ── Business / Merchant Name Translation Helper ─────────────────────────────
+const bizNameMap = {
+  en: {},
+  te: {
+    'Green Meadows Grocer': 'గ్రీన్ మేడోస్ వర్తకులు',
+    'BakeHouse & Co.': 'బేక్‌హౌస్ & కో.',
+    'Fresh Farm Foods': 'ఫ్రెష్ ఫార్మ్ ఫుడ్స్',
+    'NutriShare Admin': 'న్యూట్రిషేర్ అడ్మిన్'
+  },
+  hi: {
+    'Green Meadows Grocer': 'ग्रीन मीडोज ग्रॉसर्स',
+    'BakeHouse & Co.': 'बेकहाउस एंड कंपनी',
+    'Fresh Farm Foods': 'फ्रेश फार्म फूड्स',
+    'NutriShare Admin': 'न्यूट्रीशेयर एडमिन'
+  },
+  ta: {
+    'Green Meadows Grocer': 'கிரீன் மேடோஸ் மளிகை',
+    'BakeHouse & Co.': 'பேக்ஹவுஸ் & கோ.',
+    'Fresh Farm Foods': 'பிரெஷ் ஃபார்ம் ஃபுட்ஸ்',
+    'NutriShare Admin': 'நியூட்ரிஷேர் நிர்வாகி'
+  },
+  kn: {
+    'Green Meadows Grocer': 'ಗ್ರೀನ್ ಮೇಡೋಸ್ ದಿನಸಿ',
+    'BakeHouse & Co.': 'ಬೇಕ್‌ಹೌಸ್ & ಕೊ.',
+    'Fresh Farm Foods': 'ಫ್ರೆಶ್ ಫಾರ್ಮ್ ಫುಡ್ಸ್',
+    'NutriShare Admin': 'ನ್ಯೂಟ್ರಿಶೇರ್ ಅಡ್ಮಿನ್'
+  },
+  ml: {
+    'Green Meadows Grocer': 'ഗ്രീൻ മേഡോസ് ഗ്രോസറി',
+    'BakeHouse & Co.': 'ബേക്ക്ഹൗസ് & കോ.',
+    'Fresh Farm Foods': 'ഫ്രഷ് ഫാം ഫുഡ്സ്',
+    'NutriShare Admin': 'ന്യൂട്രിഷെയർ അഡ്മിൻ'
+  },
+  es: {
+    'Green Meadows Grocer': 'Comestibles Green Meadows',
+    'BakeHouse & Co.': 'BakeHouse & Co.',
+    'Fresh Farm Foods': 'Alimentos Frescos de Granja',
+    'NutriShare Admin': 'Admin de NutriShare'
+  },
+  fr: {
+    'Green Meadows Grocer': 'Épicerie Green Meadows',
+    'BakeHouse & Co.': 'BakeHouse & Co.',
+    'Fresh Farm Foods': 'Produits de la Ferme',
+    'NutriShare Admin': 'Admin NutriShare'
+  }
+};
+
+export function tBizName(name) {
+  if (!name) return '';
+  const map = bizNameMap[currentLang] || {};
+  return map[name] || name;
+}
+
+// Translates the entire page based on the selected language.
 export function translatePage() {
+  // Resolve selected language
+  const currentLang = getLanguage();
   const dict = translations[currentLang] || translations.en;
-  
-  // Translate text content for elements with data-i18n
-  document.querySelectorAll('[data-i18n]').forEach(el => {
-    const key = el.getAttribute('data-i18n');
-    const translatedText = dict[key] || translations.en[key];
-    if (translatedText) {
-      const icon = el.querySelector('i[data-lucide], svg');
-      if (icon) {
-        const iconHTML = icon.outerHTML;
-        el.innerHTML = `${iconHTML} <span>${translatedText}</span>`;
-      } else {
-        el.textContent = translatedText;
-      }
+
+  // Build a reverse lookup: English text -> translated text in current language
+  const reverseMap = {};
+  for (const key in translations.en) {
+    const enText = translations.en[key];
+    const localized = dict[key] || enText;
+    if (enText && localized) {
+      reverseMap[enText] = localized;
     }
+  }
+
+  // 1️⃣ Translate plain text nodes throughout the document
+  const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null, false);
+  let node;
+  while ((node = walker.nextNode())) {
+    const raw = node.nodeValue;
+    const trimmed = raw.trim();
+    if (!trimmed) continue;
+    // Exact match replacement – avoids accidental partial replacements
+    if (reverseMap[trimmed] && reverseMap[trimmed] !== trimmed) {
+      node.nodeValue = raw.replace(trimmed, reverseMap[trimmed]);
+    }
+  }
+
+  // 2️⃣ Translate common UI attributes (placeholder, title, alt)
+  const attrNames = ['placeholder', 'title', 'alt'];
+  document.querySelectorAll('[placeholder],[title],[alt]').forEach(el => {
+    attrNames.forEach(attr => {
+      const val = el.getAttribute(attr);
+      if (val && reverseMap[val] && reverseMap[val] !== val) {
+        el.setAttribute(attr, reverseMap[val]);
+      }
+    });
   });
 
-  // Translate placeholders
-  document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
-    const key = el.getAttribute('data-i18n-placeholder');
-    const translatedText = dict[key] || translations.en[key];
-    if (translatedText) {
-      el.placeholder = translatedText;
+  // 3️⃣ Keep existing data-i18n handling for icons and explicit keys
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    const translated = dict[key] || translations.en[key];
+    if (translated) {
+      const icon = el.querySelector('i[data-lucide],svg');
+      if (icon) {
+        const iconHTML = icon.outerHTML;
+        el.innerHTML = `${iconHTML} <span>${translated}</span>`;
+      } else {
+        el.textContent = translated;
+      }
     }
   });
 }

@@ -1,7 +1,7 @@
 // src/admin.js
 import { getAllUsers, getAllDonations, getAllInventory, getAdminStats, getDeliveryPartners, verifyDeliveryPartner } from './db.js';
 import { showToast } from './toast.js';
-import { t, tCat, tUnit, tName } from './i18n.js';
+import { t, tCat, tUnit, tName, tBizName } from './i18n.js';
 
 let currentAdminId = null;
 
@@ -167,7 +167,7 @@ function loadDonationsTable() {
       <td><span style="font-weight:700;font-size:0.88rem;">${tName(d.name)}</span></td>
       <td><span class="badge-pill gray">${tCat(d.category || '')}</span></td>
       <td style="font-weight:600;">${d.quantity} <span style="color:var(--text-muted);font-size:0.75rem;">${tUnit(d.unit)}</span></td>
-      <td><div style="font-weight:600;font-size:0.83rem;">${d.businessName || '—'}</div>
+      <td><div style="font-weight:600;font-size:0.83rem;">${tBizName(d.businessName) || '—'}</div>
         <div style="font-size:0.7rem;color:var(--text-muted);">${d.businessAddress || ''}</div></td>
       <td style="font-size:0.82rem;color:var(--text-secondary);">${d.expiryDate || '—'}</td>
       <td><span class="badge-pill ${cls}">${label}</span></td>
@@ -209,7 +209,7 @@ function loadClaimsTable() {
         <div style="font-size:0.72rem;color:var(--accent-ngo);font-weight:600;">${d.quantity} ${d.unit}</div>
       </td>
       <td>
-        <div style="font-weight:600;font-size:0.83rem;">🏪 ${d.businessName || 'Green Meadows Grocer'}</div>
+        <div style="font-weight:600;font-size:0.83rem;">🏪 ${tBizName(d.businessName) || 'Green Meadows Grocer'}</div>
         <div style="font-size:0.7rem;color:var(--text-muted);">${d.businessAddress || 'Springfield'}</div>
       </td>
       <td>
