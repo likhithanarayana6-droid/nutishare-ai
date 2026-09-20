@@ -1,0 +1,1366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NutriShare AI – Intelligent Food Inventory & Redistribution</title>
+  <!-- Chart.js for AI Data Visualization -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://unpkg.com/@zxing/library@latest" defer></script>
+  <!-- Leaflet.js for Live Delivery Tracking Map -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/@zxing/library@latest" defer></script>
+<link rel="stylesheet" href="./src/style.css">
+</head>
+<body class="business-theme"> <!-- Toggled dynamically to business-theme or ngo-theme -->
+  <div id="app">
+    
+    <!-- TOP NAVIGATION (Hidden during auth) -->
+    <header id="app-nav" class="navbar d-none">
+      <div class="nav-brand">
+        <div class="brand-icon">
+          <i data-lucide="leaf"></i>
+        </div>
+        <span>NutriShare<span class="brand-ai-text">AI</span></span>
+      </div>
+      
+      <div class="nav-user">
+        <select id="lang-selector" class="lang-selector form-input form-select btn-secondary" style="padding: 0.4rem 0.6rem; font-size: 0.8rem; border-radius: 20px; cursor: pointer; color: var(--text-primary); background: rgba(255,255,255,0.08);">
+          <option value="en">🌐 English</option>
+          <option value="te">🇮🇳 Telugu (తెలుగు)</option>
+          <option value="hi">🇮🇳 Hindi (हिंदी)</option>
+          <option value="ta">🇮🇳 Tamil (தமிழ்)</option>
+          <option value="kn">🇮🇳 Kannada (ಕನ್ನಡ)</option>
+          <option value="ml">🇮🇳 Malayalam (മലയാളം)</option>
+          <option value="es">🇪🇸 Spanish (Español)</option>
+          <option value="fr">🇫🇷 French (Français)</option>
+        </select>
+        <div id="user-display-badge" class="user-badge">
+          <i data-lucide="building-2"></i>
+          <span id="user-display-name">Loading...</span>
+        </div>
+        <button id="logout-btn" class="btn btn-sm btn-secondary">
+          <i data-lucide="log-out"></i> <span data-i18n="signOut">Sign Out</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- 1. AUTH PANEL (Sign In & Sign Up) -->
+    <main id="view-auth" class="auth-wrapper">
+      <div class="auth-container card-glass" style="position:relative;">
+        <!-- Auth View Language Selector -->
+        <div style="position:absolute;top:0.75rem;right:0.75rem;z-index:20;">
+          <select class="lang-selector form-input form-select btn-secondary" style="padding: 0.35rem 0.5rem; font-size: 0.75rem; border-radius: 20px; cursor: pointer; color: var(--text-primary); background: rgba(255,255,255,0.08);">
+            <option value="en">🌐 English</option>
+            <option value="te">🇮🇳 Telugu (తెలుగు)</option>
+            <option value="hi">🇮🇳 Hindi (हिंदी)</option>
+            <option value="ta">🇮🇳 Tamil (தமிழ்)</option>
+            <option value="kn">🇮🇳 Kannada (ಕನ್ನಡ)</option>
+            <option value="ml">🇮🇳 Malayalam (മലയാളം)</option>
+            <option value="es">🇪🇸 Spanish (Español)</option>
+            <option value="fr">🇫🇷 French (Français)</option>
+          </select>
+        </div>
+
+        <div class="auth-header">
+          <div class="auth-logo">
+            <i data-lucide="heart-handshake"></i>
+          </div>
+          <h1 class="auth-title">NutriShare<span class="brand-ai-text">AI</span></h1>
+          <p class="auth-subtitle" data-i18n="appSubtitle">AI-Powered Food Waste Reduction & Redistribution</p>
+        </div>
+
+        <div class="auth-tabs">
+          <button id="tab-login" class="auth-tab active" data-i18n="signIn">Sign In</button>
+          <button id="tab-register" class="auth-tab" data-i18n="createAccount">Create Account</button>
+        </div>
+
+        <!-- AUTH FORM -->
+        <form id="auth-form" autocomplete="off">
+          <!-- Role selector (only visible for registration) -->
+          <div id="register-role-section" class="d-none">
+            <label class="form-label text-center" data-i18n="selectAccountType">Select Your Account Type</label>
+            <div class="role-selector" style="grid-template-columns: repeat(3, 1fr);">
+              <div id="role-business" class="role-card selected" data-role="business">
+                <i data-lucide="store"></i>
+                <span data-i18n="businessRole">Business</span>
+                <p data-i18n="businessRoleSub">Restaurant, Grocer, Hotel</p>
+              </div>
+              <div id="role-ngo" class="role-card" data-role="ngo">
+                <i data-lucide="heart"></i>
+                <span data-i18n="recipientRole">Recipient / Beneficiary</span>
+                <p data-i18n="recipientRoleSub">Anyone in Need — NGO, Family, Individual, Shelter, Old Age Home</p>
+              </div>
+              <div id="role-delivery" class="role-card" data-role="delivery">
+                <i data-lucide="truck"></i>
+                <span data-i18n="deliveryRole">Delivery Partner</span>
+                <p data-i18n="deliveryRoleSub">Deliver food to NGOs, families & shelters</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Register Specific Field -->
+          <div id="register-name-group" class="form-group d-none">
+            <label class="form-label" for="auth-name">Organization / Business Name</label>
+            <input type="text" id="auth-name" class="form-input" placeholder="e.g. Green Meadows Market">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="auth-email">Email Address</label>
+            <input type="email" id="auth-email" class="form-input" required placeholder="name@organization.com">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="auth-password">Password</label>
+            <input type="password" id="auth-password" class="form-input" required placeholder="••••••••">
+          </div>
+
+          <!-- Register Specific Fields -->
+          <div id="register-details-section" class="d-none">
+            <div class="form-group">
+              <label class="form-label" for="auth-type" data-i18n="category">Category</label>
+              <select id="auth-type" class="form-input form-select">
+                <!-- Business subtypes by default -->
+                <option value="Supermarket">Supermarket</option>
+                <option value="Restaurant">Restaurant</option>
+                <option value="Hotel">Hotel</option>
+                <option value="Cafeteria">Cafeteria</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="auth-address" data-i18n="address">Physical Address</label>
+              <input type="text" id="auth-address" class="form-input" placeholder="e.g. 123 Main St, Springfield">
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="auth-contact" data-i18n="contact">Contact Phone Number</label>
+              <input type="text" id="auth-contact" class="form-input" placeholder="e.g. (555) 123-4567">
+            </div>
+
+            <!-- Delivery Partner Verification Fields -->
+            <div id="register-delivery-fields" class="d-none">
+              <div class="form-group">
+                <label class="form-label" for="auth-govt-id">Government ID Number (Aadhaar / National ID)</label>
+                <input type="text" id="auth-govt-id" class="form-input" placeholder="e.g. AADHAAR-8821-4412-9011">
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="auth-license">Driving License / Vehicle Reg No.</label>
+                <input type="text" id="auth-license" class="form-input" placeholder="e.g. DL-TS09-20220918">
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="auth-vehicle" data-i18n="vehicle">Vehicle Logistics Type</label>
+                <select id="auth-vehicle" class="form-input form-select">
+                  <option value="Motorbike">Motorbike / Scooter</option>
+                  <option value="Cargo Van">Refrigerated Cargo Van</option>
+                  <option value="Auto Rickshaw">3-Wheeler Auto / Pickup</option>
+                  <option value="Cargo E-Bike">Electric Cargo E-Bike</option>
+                  <option value="Foot Courier">Foot Courier (Short Range)</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div id="auth-error-msg" class="text-danger mb-3 text-center d-none" style="font-size: 0.85rem;"></div>
+
+          <button type="submit" id="auth-submit-btn" class="btn btn-primary-business w-full" data-i18n="signIn">
+            Sign In
+          </button>
+        </form>
+        
+        <div class="demo-logins-container mt-3" style="text-align: center; font-size: 0.8rem; color: var(--text-secondary);">
+          <div style="font-weight: 600; margin-bottom: 0.5rem; color: var(--text-muted);" data-i18n="quickDemoLogins">⚡ Quick One-Click Demo Login:</div>
+          <div style="display: flex; gap: 0.4rem; justify-content: center; flex-wrap: wrap;">
+            <button type="button" class="btn-demo-login" data-email="admin@test.com" data-pass="admin123" style="background: rgba(99,102,241,0.15); color: #818cf8; border: 1px solid rgba(99,102,241,0.3); border-radius: 6px; padding: 0.3rem 0.6rem; font-size: 0.75rem; cursor: pointer; font-weight: 600;">🛡️ <span data-i18n="admin">Admin</span></button>
+            <button type="button" class="btn-demo-login" data-email="business@test.com" data-pass="password" style="background: rgba(245,158,11,0.15); color: #fbbf24; border: 1px solid rgba(245,158,11,0.3); border-radius: 6px; padding: 0.3rem 0.6rem; font-size: 0.75rem; cursor: pointer; font-weight: 600;">🏪 <span data-i18n="business">Business</span></button>
+            <button type="button" class="btn-demo-login" data-email="driver@test.com" data-pass="password" style="background: rgba(14,165,233,0.15); color: #38bdf8; border: 1px solid rgba(14,165,233,0.3); border-radius: 6px; padding: 0.3rem 0.6rem; font-size: 0.75rem; cursor: pointer; font-weight: 600;">🚴 <span data-i18n="deliveryPartner">Delivery Partner</span></button>
+            <button type="button" class="btn-demo-login" data-email="ngo@test.com" data-pass="password" style="background: rgba(16,185,129,0.15); color: #34d399; border: 1px solid rgba(16,185,129,0.3); border-radius: 6px; padding: 0.3rem 0.6rem; font-size: 0.75rem; cursor: pointer; font-weight: 600;">💚 <span data-i18n="ngo">NGO</span></button>
+            <button type="button" class="btn-demo-login" data-email="oldage@test.com" data-pass="password" style="background: rgba(236,72,153,0.15); color: #f472b6; border: 1px solid rgba(236,72,153,0.3); border-radius: 6px; padding: 0.3rem 0.6rem; font-size: 0.75rem; cursor: pointer; font-weight: 600;">🏡 <span data-i18n="oldAgeHome">Old Age Home</span></button>
+            <button type="button" class="btn-demo-login" data-email="family@test.com" data-pass="password" style="background: rgba(59,130,246,0.15); color: #60a5fa; border: 1px solid rgba(59,130,246,0.3); border-radius: 6px; padding: 0.3rem 0.6rem; font-size: 0.75rem; cursor: pointer; font-weight: 600;">👨‍👩‍👧 <span data-i18n="family">Family</span></button>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- 2. BUSINESS DASHBOARD VIEW -->
+    <main id="view-business" class="dashboard-layout view-container d-none">
+      <div class="dashboard-hero">
+        <div class="hero-info">
+          <h1 id="biz-welcome">Welcome, Business Partner</h1>
+          <p data-i18n="bizHeroSub">Optimize inventory, predict shelf-life, and donate surplus food seamlessly.</p>
+        </div>
+      </div>
+
+      <!-- Tabs -->
+      <div class="dashboard-tabs">
+        <button id="biz-tab-inventory" class="db-tab active" data-i18n="inventoryManagement">
+          <i data-lucide="clipboard-list"></i> Inventory Management
+        </button>
+        <button id="biz-tab-ai" class="db-tab" data-i18n="aiWastePrediction">
+          <i data-lucide="sparkles"></i> AI Waste Prediction
+        </button>
+      </div>
+
+      <div class="dashboard-content">
+        <!-- Sub-View: Inventory Management -->
+        <section id="biz-sub-inventory">
+          <!-- Overview stats -->
+          <div class="stats-grid">
+            <div class="card-glass stat-card">
+              <div class="stat-icon"><i data-lucide="package"></i></div>
+              <div class="stat-info">
+                <p data-i18n="totalStockItems">Total Stock Items</p>
+                <h3 id="biz-stat-total-items">0</h3>
+              </div>
+            </div>
+            <div class="card-glass stat-card">
+              <div class="stat-icon" style="background: rgba(239, 68, 68, 0.15); color: var(--color-danger);"><i data-lucide="alert-triangle"></i></div>
+              <div class="stat-info">
+                <p data-i18n="criticalExpiries">Critical Expiries</p>
+                <h3 id="biz-stat-critical">0</h3>
+              </div>
+            </div>
+            <div class="card-glass stat-card">
+              <div class="stat-icon" style="background: rgba(99, 102, 241, 0.15); color: var(--accent-ai);"><i data-lucide="sparkles"></i></div>
+              <div class="stat-info">
+                <p data-i18n="aiWasteRisk">AI Waste Risk</p>
+                <h3 id="biz-stat-waste-risk">0%</h3>
+              </div>
+            </div>
+            <div class="card-glass stat-card">
+              <div class="stat-icon" style="background: rgba(16, 185, 129, 0.15); color: var(--accent-business);"><i data-lucide="heart-handshake"></i></div>
+              <div class="stat-info">
+                <p data-i18n="donationsListed">Donations Listed</p>
+                <h3 id="biz-stat-donations">0</h3>
+              </div>
+            </div>
+          </div>
+
+          <div class="inventory-grid">
+            <!-- Add Item Sidebar -->
+            <div class="card-glass">
+              <h3 class="font-heading mb-3" style="font-weight: 700;" data-i18n="stockEntryMethods">Stock Entry Methods</h3>
+              
+              <!-- Tabbed Sub-forms for Add methods -->
+              <div class="auth-tabs mb-3">
+                <button id="add-tab-manual" class="auth-tab active" style="font-size: 0.8rem; padding: 0.4rem;" data-i18n="manual">Manual</button>
+                <button id="add-tab-csv" class="auth-tab" style="font-size: 0.8rem; padding: 0.4rem;" data-i18n="csvBulk">CSV Bulk</button>
+                <button id="add-tab-scan" class="auth-tab" style="font-size: 0.8rem; padding: 0.4rem;" data-i18n="barcode">Barcode</button>
+              </div>
+
+              <!-- Manual Entry Form -->
+              <form id="form-manual-entry">
+                <div class="form-group">
+                  <label class="form-label" for="inv-name" data-i18n="itemName">Item Name</label>
+                  <input type="text" id="inv-name" class="form-input" required placeholder="e.g. Sourdough Bread">
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="inv-category" data-i18n="category">Category</label>
+                  <select id="inv-category" class="form-input form-select">
+                    <option value="Produce">Produce / Fresh</option>
+                    <option value="Bakery">Bakery</option>
+                    <option value="Dairy">Dairy</option>
+                    <option value="Meat">Meat & Seafood</option>
+                    <option value="Cooked Food">Cooked Meals</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+                <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 0.75rem;">
+                  <div class="form-group">
+                    <label class="form-label" for="inv-quantity" data-i18n="quantity">Quantity</label>
+                    <input type="number" id="inv-quantity" class="form-input" required min="0.1" step="any" placeholder="10">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label" for="inv-unit" data-i18n="unit">Unit</label>
+                    <select id="inv-unit" class="form-input form-select">
+                      <option value="units">units</option>
+                      <option value="kg">kg</option>
+                      <option value="liters">liters</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="inv-expiry" data-i18n="expiryDate">Expiry Date</label>
+                  <input type="date" id="inv-expiry" class="form-input" required>
+                </div>
+                <button type="submit" class="btn btn-primary-business w-full" data-i18n="addItem">
+                  <i data-lucide="plus"></i> Add Item
+                </button>
+              </form>
+
+              <!-- CSV Bulk Upload Form -->
+              <div id="section-csv-upload" class="d-none">
+                <p style="font-size: 0.85rem; color: var(--text-secondary);">
+                  Upload inventory lists instantly. Headers: <code>name</code>, <code>category</code>, <code>quantity</code>, <code>unit</code>, <code>expiryDate</code>.
+                </p>
+                <div id="csv-dropzone" class="csv-dropzone">
+                  <i data-lucide="upload-cloud"></i>
+                  <span id="csv-filename">Drag & Drop CSV File here or Click to Browse</span>
+                  <input type="file" id="csv-file-input" accept=".csv" style="display:none;">
+                </div>
+                <button id="csv-upload-btn" class="btn btn-primary-business w-full mt-3" disabled>
+                  <i data-lucide="upload"></i> Process CSV Import
+                </button>
+              </div>
+
+              <!-- Barcode / QR Scanner (Real - ZXing powered) -->
+              <div id="section-barcode-scan" class="d-none">
+                <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.75rem;">
+                  Point your camera at any EAN-13 barcode, QR code, or type a code manually.
+                </p>
+
+                <!-- Scanner Status Badge -->
+                <div id="scanner-status-badge" class="scanner-status-badge" style="margin-bottom: 0.5rem;">
+                  <span id="scanner-status-dot" class="scanner-dot idle"></span>
+                  <span id="scanner-status-text">Initializing camera…</span>
+                </div>
+
+                <!-- Auto-Add Toggle Switch -->
+                <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.02); border: 1px solid var(--border-glass); border-radius: 8px; padding: 0.6rem 0.8rem; margin-bottom: 0.75rem;">
+                  <div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.8rem;">
+                    <i data-lucide="zap" style="color: var(--accent-business); width: 1rem; height: 1rem;"></i>
+                    <span style="font-weight: 600;">Auto-Add Scanned Items</span>
+                  </div>
+                  <label class="switch">
+                    <input type="checkbox" id="scan-auto-add" checked>
+                    <span class="slider round"></span>
+                  </label>
+                </div>
+
+                <div class="scanner-container">
+                  <!-- Camera Select Dropdown -->
+                  <div style="margin-bottom:0.75rem;">
+                    <select id="biz-camera-select" class="form-input form-select" style="font-size:0.8rem;padding:0.3rem 0.6rem;">
+                      <option value="">🎥 Auto-select Default Camera</option>
+                    </select>
+                  </div>
+
+                  <div class="scanner-viewfinder">
+                    <div id="scanner-scanline-el" class="scanner-scanline"></div>
+                    <div class="scanner-corner tl"></div>
+                    <div class="scanner-corner tr"></div>
+                    <div class="scanner-corner bl"></div>
+                    <div class="scanner-corner br"></div>
+                    <video id="scanner-video" class="scanner-camera-feed" autoplay playsinline muted></video>
+                    <!-- Overlay shown when scanning or no camera -->
+                    <div id="scanner-overlay" class="scanner-overlay-info">
+                      Starting camera…
+                    </div>
+                    <!-- Success flash overlay -->
+                    <div id="scanner-success-flash" class="scanner-success-flash d-none"></div>
+                  </div>
+
+                  <!-- Detected Product Card (shown after successful scan) -->
+                  <div id="scan-result-card" class="scan-result-card d-none">
+                    <div class="scan-result-header">
+                      <i data-lucide="check-circle" style="color: var(--accent-business);"></i>
+                      <span>Barcode Detected!</span>
+                      <code id="scan-result-code" class="scan-result-code"></code>
+                    </div>
+                    <div id="scan-result-product" class="scan-result-product">
+                      <!-- Product info filled dynamically -->
+                    </div>
+                    <div id="scan-result-unknown" class="d-none" style="font-size:0.8rem; color: var(--text-secondary); padding: 0.5rem 0;">
+                      Product not in catalog. Fill details below and add manually.
+                    </div>
+                    <!-- Scanned item quick-add form -->
+                    <div class="scan-quick-add">
+                      <div class="form-group" style="margin-bottom: 0.5rem;">
+                        <label class="form-label" style="font-size:0.75rem;">Product Name</label>
+                        <input type="text" id="scan-name-input" class="form-input" placeholder="e.g. Sourdough Bread">
+                      </div>
+                      <div style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 0.5rem; margin-bottom: 0.5rem;">
+                        <div>
+                          <label class="form-label" style="font-size:0.75rem;">Quantity</label>
+                          <input type="number" id="scan-qty" class="form-input" min="0.1" step="any" placeholder="0">
+                        </div>
+                        <div>
+                          <label class="form-label" style="font-size:0.75rem;">Unit</label>
+                          <select id="scan-unit" class="form-input form-select" style="padding: 0.35rem 0.5rem; font-size: 0.8rem; height: 34px;">
+                            <option value="units">units</option>
+                            <option value="kg">kg</option>
+                            <option value="liters">liters</option>
+                          </select>
+                        </div>
+                      </div>
+                      <div style="margin-bottom: 0.75rem;">
+                        <label class="form-label" style="font-size:0.75rem;">Expiry Date</label>
+                        <input type="date" id="scan-expiry" class="form-input">
+                      </div>
+                      <button id="btn-add-scanned-item" class="btn btn-primary-business w-full">
+                        <i data-lucide="plus"></i> Add to Inventory
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- Camera Controls -->
+                  <div style="display: flex; gap: 0.5rem; margin-top: 0.75rem;">
+                    <button id="btn-start-scan" class="btn btn-primary-business" style="flex:1;">
+                      <i data-lucide="camera"></i> Start Scanner
+                    </button>
+                    <button id="btn-stop-scan" class="btn btn-secondary d-none" style="flex:1;">
+                      <i data-lucide="square"></i> Stop
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Manual barcode entry fallback -->
+                <div class="manual-barcode-entry">
+                  <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.5rem;">
+                    <div style="flex:1; height:1px; background: var(--border-glass);"></div>
+                    <span style="font-size:0.75rem; color:var(--text-muted); white-space:nowrap;">or click quick demo code</span>
+                    <div style="flex:1; height:1px; background: var(--border-glass);"></div>
+                  </div>
+                  <div style="display:flex; gap:0.5rem;">
+                    <input type="text" id="manual-barcode-input" class="form-input" placeholder="e.g. NS-BANANA or EAN-13 code…" style="flex:1;">
+                    <button id="btn-manual-barcode-lookup" class="btn btn-secondary">
+                      <i data-lucide="search"></i> Lookup
+                    </button>
+                  </div>
+                  <p style="font-size:0.72rem; color: var(--text-muted); margin-top: 0.4rem;">
+                    Click to test: <code style="cursor:pointer;background:rgba(255,255,255,0.08);padding:0.1rem 0.4rem;border-radius:4px;">NS-BANANA</code> · <code style="cursor:pointer;background:rgba(255,255,255,0.08);padding:0.1rem 0.4rem;border-radius:4px;">NS-MILK</code> · <code style="cursor:pointer;background:rgba(255,255,255,0.08);padding:0.1rem 0.4rem;border-radius:4px;">NS-BREAD</code> · <code style="cursor:pointer;background:rgba(255,255,255,0.08);padding:0.1rem 0.4rem;border-radius:4px;">8850123456789</code> · <code style="cursor:pointer;background:rgba(255,255,255,0.08);padding:0.1rem 0.4rem;border-radius:4px;">8901030000000</code>
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Inventory List Table View -->
+            <div class="card-glass">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.75rem;">
+                <h3 class="font-heading" style="font-weight: 700;" data-i18n="currentStockDirectory">Current Stock Directory</h3>
+                <div>
+                  <select id="inventory-filter-cat" class="form-input form-select btn-secondary" style="padding: 0.4rem 2rem 0.4rem 1rem; width: auto; font-size: 0.85rem;">
+                    <option value="All">All Categories</option>
+                    <option value="Produce">Produce / Fresh</option>
+                    <option value="Bakery">Bakery</option>
+                    <option value="Dairy">Dairy</option>
+                    <option value="Meat">Meat & Seafood</option>
+                    <option value="Cooked Food">Cooked Meals</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="table-container">
+                <table class="table-custom">
+                  <thead>
+                    <tr>
+                      <th data-i18n="itemName">Product</th>
+                      <th data-i18n="category">Category</th>
+                      <th data-i18n="quantity">Quantity</th>
+                      <th data-i18n="expiryDate">Expiry</th>
+                      <th data-i18n="status">Status Alerts</th>
+                      <th style="text-align: right;" data-i18n="actions">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody id="inventory-table-body">
+                    <!-- Dynamic rendering -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Sub-View: AI Predictions & Recommendations -->
+        <section id="biz-sub-ai" class="d-none">
+          <div class="ai-warning-box">
+            <i data-lucide="brain-circuit"></i>
+            <div>
+              <h4>AI Engine Insights</h4>
+              <p>Predictive engine analyses current stock against average daily sales velocities. Items listed as High/Critical risks are highly recommended for redistribution or flash discounts.</p>
+            </div>
+          </div>
+
+          <div class="ai-prediction-grid">
+            <!-- Analytics Chart and Risks -->
+            <div class="card-glass">
+              <h3 class="font-heading mb-3" style="font-weight: 700;">Waste Risk Analysis</h3>
+              <div style="height: 280px; position: relative; margin-bottom: 2rem;">
+                <canvas id="ai-demand-chart"></canvas>
+              </div>
+
+              <div class="table-container">
+                <table class="table-custom">
+                  <thead>
+                    <tr>
+                      <th>Product Name</th>
+                      <th>Current Quantity</th>
+                      <th>Days Left</th>
+                      <th>Sales Velocity</th>
+                      <th>Predicted Waste</th>
+                      <th>Risk Level</th>
+                    </tr>
+                  </thead>
+                  <tbody id="ai-prediction-table-body">
+                    <!-- Dynamic prediction items -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Reorder Checklist & Suggestions -->
+            <div class="card-glass">
+              <h3 class="font-heading mb-3" style="font-weight: 700;">AI Reorder Checklist</h3>
+              <p style="font-size: 0.8rem; color: var(--text-secondary);">
+                Smart items recommendation below the safe buffer threshold.
+              </p>
+              
+              <div id="ai-reorder-list" class="reorder-list">
+                <!-- Reorder Checkboxes -->
+              </div>
+              <button id="btn-reorder-checked" class="btn btn-primary-business w-full mt-3" style="background: var(--grad-ai); box-shadow: var(--shadow-glow-ai);">
+                <i data-lucide="shopping-cart"></i> Generate Order Invoice
+              </button>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <!-- 3. NGO / RECIPIENT DASHBOARD VIEW -->
+    <main id="view-ngo" class="dashboard-layout view-container d-none">
+      <div class="dashboard-hero">
+        <div class="hero-info">
+          <h1 id="ngo-welcome">Welcome, NGO Representative</h1>
+          <p data-i18n="ngoHeroSub">Browse available fresh donations, coordinate pickups, and log rescued food stats.</p>
+        </div>
+      </div>
+
+      <!-- Tabs -->
+      <div class="dashboard-tabs">
+        <button id="ngo-tab-browse" class="db-tab active" data-i18n="availableDonations">
+          <i data-lucide="map-pin"></i> Available Donations
+        </button>
+        <button id="ngo-tab-claims" class="db-tab" data-i18n="activePickups">
+          <i data-lucide="truck"></i> Active Pickups
+        </button>
+        <button id="ngo-tab-impact" class="db-tab" data-i18n="impactTracker">
+          <i data-lucide="line-chart"></i> Impact Tracker
+        </button>
+      </div>
+
+      <div class="dashboard-content">
+        <!-- Sub-View: Browse Available Donations -->
+        <section id="ngo-sub-browse">
+          <div class="stats-grid">
+            <div class="card-glass stat-card">
+              <div class="stat-icon"><i data-lucide="handshake"></i></div>
+              <div class="stat-info">
+                <p data-i18n="availableListings">Available Listings</p>
+                <h3 id="ngo-stat-listings">0</h3>
+              </div>
+            </div>
+            <div class="card-glass stat-card">
+              <div class="stat-icon" style="background: rgba(6, 182, 212, 0.15); color: var(--accent-ngo);"><i data-lucide="shopping-bag"></i></div>
+              <div class="stat-info">
+                <p data-i18n="itemsInCart">Items in Claim Cart</p>
+                <h3 id="ngo-stat-cart-count">0</h3>
+              </div>
+            </div>
+            <div class="card-glass stat-card">
+              <div class="stat-icon" style="background: rgba(16, 185, 129, 0.15); color: var(--accent-business);"><i data-lucide="sprout"></i></div>
+              <div class="stat-info">
+                <p data-i18n="totalRescuedFood">Total Rescued Food</p>
+                <h3 id="ngo-stat-rescued">0 kg</h3>
+              </div>
+            </div>
+            <div class="card-glass stat-card">
+              <div class="stat-icon" style="background: rgba(99, 102, 241, 0.15); color: var(--accent-ai);"><i data-lucide="award"></i></div>
+              <div class="stat-info">
+                <p data-i18n="co2Saved">CO2 Saved Equivalent</p>
+                <h3 id="ngo-stat-co2">0 kg</h3>
+              </div>
+            </div>
+          </div>
+
+          <div class="ngo-listings-grid">
+            <!-- Donation Feed -->
+            <div>
+              <div class="filter-bar">
+                <div class="search-input-wrapper">
+                  <i data-lucide="search"></i>
+                  <input type="text" id="ngo-search" class="form-input" placeholder="Search available food listings (e.g. Bread, Bananas)..." data-i18n-placeholder="searchPlaceholder">
+                </div>
+                <select id="ngo-filter-cat" class="form-input form-select btn-secondary" style="padding: 0.4rem 2.25rem 0.4rem 1rem; width: auto; font-size: 0.85rem;">
+                  <option value="All" data-i18n="allCategories">All Categories</option>
+                  <option value="Produce">Produce / Fresh</option>
+                  <option value="Bakery">Bakery</option>
+                  <option value="Dairy">Dairy</option>
+                  <option value="Meat">Meat & Seafood</option>
+                  <option value="Cooked Food">Cooked Meals</option>
+                </select>
+              </div>
+<!-- Scanner Button -->
+            <button id="ngo-scanner-btn" class="btn btn-primary-ngo" style="margin-left:0.5rem;">
+              <i data-lucide="camera"></i> Scan Barcode
+            </button>
+            <!-- Scanner Modal (hidden) -->
+            <div id="modal-ngo-scan" class="d-none" style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.75);display:flex;justify-content:center;align-items:center;z-index:1000;padding:1rem;">
+              <div class="card-glass" style="padding:1.5rem;max-width:520px;width:100%;position:relative;max-height:90vh;overflow-y:auto;border:1px solid var(--accent-ngo);">
+                <button id="ngo-scanner-close" class="btn btn-sm btn-secondary" style="position:absolute;top:0.75rem;right:0.75rem;z-index:10;">✖</button>
+                <h3 class="font-heading mb-2" style="font-weight:700;display:flex;align-items:center;gap:0.5rem;">
+                  <i data-lucide="camera" style="color:var(--accent-ngo);"></i> Barcode / QR Scanner
+                </h3>
+
+                <!-- Camera Select Dropdown -->
+                <div style="margin-bottom:0.75rem;">
+                  <select id="ngo-camera-select" class="form-input form-select" style="font-size:0.8rem;padding:0.3rem 0.6rem;">
+                    <option value="">🎥 Auto-select Default Camera</option>
+                  </select>
+                </div>
+
+                <div id="scanner-status-badge" class="scanner-status-badge" style="margin-bottom:0.75rem;padding:0.4rem 0.8rem;background:rgba(255,255,255,0.05);border-radius:6px;font-size:0.8rem;">
+                  <span id="scanner-status-dot" class="scanner-dot idle"></span>
+                  <span id="scanner-status-text">Camera ready. Press 'Start Scanner' or use quick test below.</span>
+                </div>
+
+                <div class="scanner-container" style="position:relative;background:#000;border-radius:8px;overflow:hidden;min-height:200px;display:flex;align-items:center;justify-content:center;">
+                  <video id="ngo-scanner-video" class="scanner-camera-feed" autoplay playsinline muted style="width:100%;max-height:240px;object-fit:cover;border-radius:8px;"></video>
+                  <div id="scanner-overlay" class="scanner-overlay-info" style="position:absolute;bottom:0.5rem;background:rgba(0,0,0,0.6);padding:0.25rem 0.75rem;border-radius:4px;font-size:0.75rem;color:#aaa;">
+                    Point camera at food item barcode
+                  </div>
+                </div>
+
+                <div style="display:flex;gap:0.5rem;margin-top:0.75rem;">
+                  <button id="ngo-scanner-start" class="btn btn-primary-ngo" style="flex:1;">▶ Start Camera Scanner</button>
+                  <button id="ngo-scanner-stop" class="btn btn-secondary d-none" style="flex:1;">⏹ Stop Camera</button>
+                </div>
+
+                <!-- Manual Test Entry & Preset Barcodes -->
+                <div style="margin-top:1.25rem;padding-top:1rem;border-top:1px solid var(--border-glass);">
+                  <div style="font-size:0.8rem;font-weight:600;color:var(--text-secondary);margin-bottom:0.4rem;">
+                    ⚡ Direct Barcode Input / Quick Demo Test:
+                  </div>
+                  <div style="display:flex;gap:0.5rem;margin-bottom:0.6rem;">
+                    <input type="text" id="ngo-scan-manual-code" class="form-input" placeholder="Enter barcode (e.g. 8850123456789)..." style="font-size:0.82rem;padding:0.4rem 0.75rem;">
+                    <button id="ngo-scan-manual-btn" class="btn btn-sm btn-primary-business" style="white-space:nowrap;">Scan Code</button>
+                  </div>
+
+                  <div style="font-size:0.72rem;color:var(--text-muted);margin-bottom:0.3rem;">Quick Test Barcodes:</div>
+                  <div style="display:flex;flex-wrap:wrap;gap:0.35rem;">
+                    <button class="btn btn-sm btn-secondary btn-quick-barcode" data-code="8850123456789" style="font-size:0.7rem;padding:0.2rem 0.5rem;">🍌 Bananas (8850123456789)</button>
+                    <button class="btn btn-sm btn-secondary btn-quick-barcode" data-code="8901030000000" style="font-size:0.7rem;padding:0.2rem 0.5rem;">🍞 Bread (8901030000000)</button>
+                    <button class="btn btn-sm btn-secondary btn-quick-barcode" data-code="8901058852391" style="font-size:0.7rem;padding:0.2rem 0.5rem;">🥛 Milk (8901058852391)</button>
+                  </div>
+                </div>
+
+                <div id="ngo-scan-result-card" class="scan-result-card d-none" style="margin-top:1rem;padding:0.85rem;background:rgba(16,185,129,0.1);border:1px solid var(--accent-business);border-radius:8px;">
+                  <div class="scan-result-header" style="display:flex;align-items:center;gap:0.5rem;font-weight:700;color:var(--accent-business);font-size:0.9rem;">
+                    <i data-lucide="check-circle"></i>
+                    <span>Barcode Detected!</span>
+                    <code id="scan-result-code" class="scan-result-code" style="margin-left:auto;background:rgba(0,0,0,0.3);padding:0.2rem 0.5rem;border-radius:4px;"></code>
+                  </div>
+                  <div id="scan-result-product" class="scan-result-product" style="margin-top:0.5rem;font-size:0.85rem;"></div>
+                  <div id="scan-result-unknown" class="d-none" style="font-size:0.8rem;color:#f87171;padding:0.5rem 0;">
+                    ❌ Product barcode not found in active listings.
+                  </div>
+                </div>
+              </div>
+            </div>
+              <div id="ngo-donation-cards" class="donation-cards-container">
+                <!-- Dynamically loaded food cards -->
+              </div>
+            </div>
+
+            <!-- claim Cart Sidebar -->
+            <div class="card-glass claims-cart">
+              <div class="cart-title">
+                <span data-i18n="claimListBasket">Claim List Basket</span>
+                <span id="cart-counter-badge" class="cart-count">0</span>
+              </div>
+              
+              <div id="ngo-cart-items" class="cart-items">
+                <!-- Cart list -->
+                <p class="text-muted text-center" style="font-size: 0.85rem; padding: 2rem 0;" data-i18n="emptyBasket">Your basket is empty. Click 'Add to Basket' on items to claim.</p>
+              </div>
+
+              <button id="btn-checkout-claims" class="btn btn-primary-ngo w-full" disabled data-i18n="scheduleClaimsPickup">
+                <i data-lucide="calendar"></i> Schedule Claims Pickup
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <!-- Sub-View: Active Claims / Pickup Schedules -->
+        <section id="ngo-sub-claims" class="d-none">
+          <h3 class="font-heading mb-3" style="font-weight: 700;">Scheduled Collections & Delivery Tickets</h3>
+          <div id="ngo-active-claims-list" class="claims-grid">
+            <!-- Active claim cards with timeline status tracker -->
+          </div>
+        </section>
+
+        <!-- Sub-View: NGO Impact tracker -->
+        <section id="ngo-sub-impact" class="d-none">
+          <div class="stats-grid">
+            <div class="card-glass stat-card" style="box-shadow: var(--shadow-glow-ngo);">
+              <div class="stat-icon"><i data-lucide="shield-check"></i></div>
+              <div class="stat-info">
+                <p>Active Pickups</p>
+                <h3 id="impact-stat-active">0</h3>
+              </div>
+            </div>
+            <div class="card-glass stat-card">
+              <div class="stat-icon" style="background: rgba(16, 185, 129, 0.15); color: var(--accent-business);"><i data-lucide="heart"></i></div>
+              <div class="stat-info">
+                <p>Completed Collections</p>
+                <h3 id="impact-stat-completed">0</h3>
+              </div>
+            </div>
+            <div class="card-glass stat-card">
+              <div class="stat-icon" style="background: rgba(99, 102, 241, 0.15); color: var(--accent-ai);"><i data-lucide="globe"></i></div>
+              <div class="stat-info">
+                <p>CO2 Carbon Prevented</p>
+                <h3 id="impact-stat-co2">0 kg</h3>
+              </div>
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-top: 1.5rem;">
+            <div class="card-glass">
+              <h3 class="font-heading mb-3" style="font-weight: 700;">Rescued Categories Volume</h3>
+              <div style="height: 250px; position: relative;">
+                <canvas id="ngo-impact-pie-chart"></canvas>
+              </div>
+            </div>
+            <div class="card-glass">
+              <h3 class="font-heading mb-3" style="font-weight: 700;">Redistribution Environmental Savings</h3>
+              <div class="ai-warning-box mt-3" style="background: rgba(16,185,129,0.03); border-color: rgba(16,185,129,0.15)">
+                <i data-lucide="sprout" style="color: var(--accent-business)"></i>
+                <div>
+                  <h4 style="color: var(--accent-business)">Ecological Impact Summary</h4>
+                  <p style="font-size: 0.85rem; line-height: 1.6;">Every kg of food saved from landfills reduces approx. 2.5 kg of greenhouse gases (CO2 equivalent) and saves 1,200 liters of water used during agricultural production.</p>
+                </div>
+              </div>
+              <div class="reorder-list">
+                <div class="reorder-item">
+                  <div class="reorder-item-left">
+                    <i data-lucide="droplet" style="color: #3b82f6;"></i>
+                    <span class="reorder-name">Water Resources Preserved</span>
+                  </div>
+                  <span id="impact-water-saved" class="reorder-badge" style="background: rgba(59, 130, 246, 0.15); color: #93c5fd;">0 L</span>
+                </div>
+                <div class="reorder-item">
+                  <div class="reorder-item-left">
+                    <i data-lucide="cookie" style="color: #f59e0b;"></i>
+                    <span class="reorder-name">Meal Equivalents Distributed</span>
+                  </div>
+                  <span id="impact-meals-served" class="reorder-badge" style="background: rgba(245, 158, 11, 0.15); color: #fde047;">0 Meals</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <!-- 4. ADMIN DASHBOARD -->
+    <section id="view-admin" class="dashboard-wrapper d-none admin-theme">
+
+      <!-- ── Premium Hero Banner ── -->
+      <div class="admin-hero-banner">
+        <div class="admin-hero-inner">
+          <div class="admin-hero-text">
+            <h1 id="admin-welcome">Welcome back, Admin 👋</h1>
+            <p data-i18n="adminHeroSub">Platform control center — manage users, donations, partners &amp; delivery operations.</p>
+            <div class="admin-hero-badge">
+              <span class="dot"></span>
+              NutriShare Platform · Admin Mode
+            </div>
+          </div>
+          <div class="admin-hero-actions">
+            <button class="btn btn-secondary btn-sm" onclick="location.reload()" data-i18n="refresh">
+              <i data-lucide="refresh-cw"></i> Refresh
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Pill Tab Navigation ── -->
+      <nav class="admin-tab-nav">
+        <button class="admin-tab-btn admin-tab-pill active" data-target="admin-overview" data-i18n="overview">
+          <i data-lucide="layout-dashboard"></i> Overview
+        </button>
+        <button class="admin-tab-btn admin-tab-pill" data-target="admin-users" data-i18n="users">
+          <i data-lucide="users"></i> Users
+          <span class="tab-count" id="tc-users">0</span>
+        </button>
+        <button class="admin-tab-btn admin-tab-pill" data-target="admin-donations" data-i18n="donations">
+          <i data-lucide="package"></i> Donations
+          <span class="tab-count" id="tc-donations">0</span>
+        </button>
+        <button class="admin-tab-btn admin-tab-pill" data-target="admin-claims" data-i18n="claimsDeliveries">
+          <i data-lucide="truck"></i> Claims
+          <span class="tab-count" id="tc-claims">0</span>
+        </button>
+        <button class="admin-tab-btn admin-tab-pill" data-target="admin-partners" data-i18n="deliveryPartners">
+          <i data-lucide="shield-check"></i> Partners
+          <span class="tab-count" id="tc-partners">0</span>
+        </button>
+      </nav>
+
+      <!-- ── Content Area ── -->
+      <div class="admin-content">
+
+        <!-- ══ OVERVIEW TAB ══ -->
+        <div id="admin-overview" class="admin-tab-section">
+          <!-- KPI Grid -->
+          <div class="admin-kpi-grid">
+            <div class="admin-kpi-card" style="--kpi-color:#6366f1;--kpi-bg:rgba(99,102,241,0.15);">
+              <div class="kpi-top">
+                <div class="kpi-icon"><i data-lucide="users"></i></div>
+                <span class="kpi-trend neutral">All</span>
+              </div>
+              <div class="kpi-value" id="stat-total-users">0</div>
+              <div class="kpi-label">Total Users</div>
+            </div>
+            <div class="admin-kpi-card" style="--kpi-color:#f59e0b;--kpi-bg:rgba(245,158,11,0.15);">
+              <div class="kpi-top">
+                <div class="kpi-icon"><i data-lucide="store"></i></div>
+                <span class="kpi-trend up">Donors</span>
+              </div>
+              <div class="kpi-value" id="stat-total-businesses">0</div>
+              <div class="kpi-label">Businesses</div>
+            </div>
+            <div class="admin-kpi-card" style="--kpi-color:#10b981;--kpi-bg:rgba(16,185,129,0.15);">
+              <div class="kpi-top">
+                <div class="kpi-icon"><i data-lucide="heart"></i></div>
+                <span class="kpi-trend up">Active</span>
+              </div>
+              <div class="kpi-value" id="stat-total-ngos">0</div>
+              <div class="kpi-label">NGOs / Recipients</div>
+            </div>
+            <div class="admin-kpi-card" style="--kpi-color:#0ea5e9;--kpi-bg:rgba(14,165,233,0.15);">
+              <div class="kpi-top">
+                <div class="kpi-icon"><i data-lucide="truck"></i></div>
+                <span class="kpi-trend neutral">Fleet</span>
+              </div>
+              <div class="kpi-value" id="stat-total-partners">0</div>
+              <div class="kpi-label">Delivery Partners</div>
+            </div>
+            <div class="admin-kpi-card" style="--kpi-color:#ec4899;--kpi-bg:rgba(236,72,153,0.15);">
+              <div class="kpi-top">
+                <div class="kpi-icon"><i data-lucide="package"></i></div>
+                <span class="kpi-trend up">Total</span>
+              </div>
+              <div class="kpi-value" id="stat-total-donations">0</div>
+              <div class="kpi-label">Donations</div>
+            </div>
+            <div class="admin-kpi-card" style="--kpi-color:#22c55e;--kpi-bg:rgba(34,197,94,0.15);">
+              <div class="kpi-top">
+                <div class="kpi-icon"><i data-lucide="circle-check"></i></div>
+                <span class="kpi-trend up">Live</span>
+              </div>
+              <div class="kpi-value" id="stat-available-donations">0</div>
+              <div class="kpi-label">Available Now</div>
+            </div>
+            <div class="admin-kpi-card" style="--kpi-color:#3b82f6;--kpi-bg:rgba(59,130,246,0.15);">
+              <div class="kpi-top">
+                <div class="kpi-icon"><i data-lucide="clipboard-check"></i></div>
+                <span class="kpi-trend up">Claimed</span>
+              </div>
+              <div class="kpi-value" id="stat-claimed-donations">0</div>
+              <div class="kpi-label">Claimed Donations</div>
+            </div>
+            <div class="admin-kpi-card" style="--kpi-color:#a855f7;--kpi-bg:rgba(168,85,247,0.15);">
+              <div class="kpi-top">
+                <div class="kpi-icon"><i data-lucide="warehouse"></i></div>
+                <span class="kpi-trend neutral">Stock</span>
+              </div>
+              <div class="kpi-value" id="stat-total-inventory">0</div>
+              <div class="kpi-label">Inventory Items</div>
+            </div>
+          </div>
+
+          <!-- Overview Summary Cards -->
+          <div class="admin-overview-grid">
+            <!-- Donation Breakdown -->
+            <div class="admin-chart-card">
+              <h3 data-i18n="donationStatusBreakdown">📊 Donation Status Breakdown</h3>
+              <div class="donut-wrap" style="display:flex;align-items:center;gap:1.5rem;margin-top:1rem;">
+                <div class="donut-svg-wrap" style="position:relative;">
+                  <svg viewBox="0 0 36 36" width="120" height="120">
+                    <circle cx="18" cy="18" r="15.9" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="4"/>
+                    <circle id="donut-available-arc" cx="18" cy="18" r="15.9" fill="none" stroke="#22c55e" stroke-width="4"
+                      stroke-dasharray="0 100" stroke-dashoffset="25" stroke-linecap="round" transform="rotate(-90 18 18)" style="transition:stroke-dasharray 0.6s ease;"/>
+                    <circle id="donut-claimed-arc" cx="18" cy="18" r="15.9" fill="none" stroke="#3b82f6" stroke-width="4"
+                      stroke-dasharray="0 100" stroke-dashoffset="25" stroke-linecap="round" transform="rotate(-90 18 18)" style="transition:stroke-dasharray 0.6s ease;"/>
+                    <circle id="donut-assigned-arc" cx="18" cy="18" r="15.9" fill="none" stroke="#6366f1" stroke-width="4"
+                      stroke-dasharray="0 100" stroke-dashoffset="25" stroke-linecap="round" transform="rotate(-90 18 18)" style="transition:stroke-dasharray 0.6s ease;"/>
+                  </svg>
+                  <div class="donut-center-label" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;">
+                    <div class="big" id="donut-center-val" style="font-size:1.6rem;font-weight:800;color:#fff;">0</div>
+                    <div class="small" style="font-size:0.7rem;color:var(--text-muted);text-transform:uppercase;" data-i18n="total">Total</div>
+                  </div>
+                </div>
+                <div class="donut-legend" style="display:flex;flex-direction:column;gap:0.5rem;flex-grow:1;">
+                  <div class="donut-legend-item" style="display:flex;align-items:center;justify-content:space-between;font-size:0.82rem;">
+                    <div style="display:flex;align-items:center;gap:0.5rem;">
+                      <div class="donut-legend-dot" style="width:10px;height:10px;border-radius:50%;background:#22c55e;"></div>
+                      <span class="donut-legend-label" data-i18n="available" style="color:var(--text-secondary);">Available</span>
+                    </div>
+                    <span class="donut-legend-val" id="legend-available" style="font-weight:700;color:#fff;">0</span>
+                  </div>
+                  <div class="donut-legend-item" style="display:flex;align-items:center;justify-content:space-between;font-size:0.82rem;">
+                    <div style="display:flex;align-items:center;gap:0.5rem;">
+                      <div class="donut-legend-dot" style="width:10px;height:10px;border-radius:50%;background:#3b82f6;"></div>
+                      <span class="donut-legend-label" data-i18n="claimed" style="color:var(--text-secondary);">Claimed</span>
+                    </div>
+                    <span class="donut-legend-val" id="legend-claimed" style="font-weight:700;color:#fff;">0</span>
+                  </div>
+                  <div class="donut-legend-item" style="display:flex;align-items:center;justify-content:space-between;font-size:0.82rem;">
+                    <div style="display:flex;align-items:center;gap:0.5rem;">
+                      <div class="donut-legend-dot" style="width:10px;height:10px;border-radius:50%;background:#6366f1;"></div>
+                      <span class="donut-legend-label" data-i18n="statusAssigned" style="color:var(--text-secondary);">Driver Assigned</span>
+                    </div>
+                    <span class="donut-legend-val" id="legend-assigned" style="font-weight:700;color:#fff;">0</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <!-- Platform Activity Feed -->
+            <div class="admin-chart-card">
+              <h3>⚡ Platform Activity</h3>
+              <div class="activity-feed" id="admin-activity-feed">
+                <div class="activity-item">
+                  <div class="activity-dot-wrap">
+                    <div class="activity-dot" style="background:#6366f1;"></div>
+                    <div class="activity-line"></div>
+                  </div>
+                  <div class="activity-text">
+                    <strong>Admin Dashboard Loaded</strong>
+                    <span>Monitoring started successfully</span>
+                  </div>
+                </div>
+                <div class="activity-item">
+                  <div class="activity-dot-wrap">
+                    <div class="activity-dot" style="background:#10b981;"></div>
+                    <div class="activity-line"></div>
+                  </div>
+                  <div class="activity-text">
+                    <strong>Data synchronized</strong>
+                    <span>All records loaded from local DB</span>
+                  </div>
+                </div>
+                <div class="activity-item">
+                  <div class="activity-dot-wrap">
+                    <div class="activity-dot" style="background:#f59e0b;"></div>
+                  </div>
+                  <div class="activity-text">
+                    <strong>Platform ready</strong>
+                    <span>NutriShare AI is fully operational</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ══ USERS TAB ══ -->
+        <div id="admin-users" class="admin-tab-section d-none">
+          <div class="admin-panel">
+            <div class="admin-panel-header">
+              <div class="admin-panel-title">
+                <div class="panel-icon" style="background:rgba(99,102,241,0.15);color:#a5b4fc;">
+                  <i data-lucide="users"></i>
+                </div>
+                Registered Users
+              </div>
+              <div class="admin-panel-actions">
+                <div class="admin-search-bar">
+                  <i data-lucide="search"></i>
+                  <input type="text" id="user-search-input" placeholder="Search users…" oninput="filterAdminTable(this,'admin-users-tbody')">
+                </div>
+                <span id="admin-users-count" class="admin-count-pill">0 users</span>
+              </div>
+            </div>
+            <div class="table-responsive">
+              <table class="admin-table-premium">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>User</th>
+                    <th>Role</th>
+                    <th>Type</th>
+                    <th>Location</th>
+                    <th>Contact</th>
+                    <th>ID</th>
+                  </tr>
+                </thead>
+                <tbody id="admin-users-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- ══ DONATIONS TAB ══ -->
+        <div id="admin-donations" class="admin-tab-section d-none">
+          <div class="admin-panel">
+            <div class="admin-panel-header">
+              <div class="admin-panel-title">
+                <div class="panel-icon" style="background:rgba(236,72,153,0.15);color:#f9a8d4;">
+                  <i data-lucide="package"></i>
+                </div>
+                All Donations
+              </div>
+              <div class="admin-panel-actions">
+                <div class="admin-search-bar">
+                  <i data-lucide="search"></i>
+                  <input type="text" id="donation-search-input" placeholder="Search donations…" oninput="filterAdminTable(this,'admin-donations-tbody')">
+                </div>
+                <span id="admin-donations-count" class="admin-count-pill">0 total</span>
+              </div>
+            </div>
+            <div class="table-responsive">
+              <table class="admin-table-premium">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Item</th>
+                    <th>Category</th>
+                    <th>Qty</th>
+                    <th>Donated By</th>
+                    <th>Expiry</th>
+                    <th>Status</th>
+                    <th>Distance</th>
+                  </tr>
+                </thead>
+                <tbody id="admin-donations-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- ══ CLAIMS TAB ══ -->
+        <div id="admin-claims" class="admin-tab-section d-none">
+          <div class="admin-panel">
+            <div class="admin-panel-header">
+              <div class="admin-panel-title">
+                <div class="panel-icon" style="background:rgba(14,165,233,0.15);color:#7dd3fc;">
+                  <i data-lucide="truck"></i>
+                </div>
+                Claims &amp; Delivery Tracking
+              </div>
+              <div class="admin-panel-actions">
+                <span id="admin-claims-count" class="admin-count-pill">0 claims</span>
+              </div>
+            </div>
+            <div class="table-responsive">
+              <table class="admin-table-premium">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th data-i18n="donations">Item &amp; Qty</th>
+                    <th data-i18n="donatedBy">Donated By (Donor)</th>
+                    <th data-i18n="claimedBy">Claimed By (Acceptor)</th>
+                    <th data-i18n="assignedDriver">Assigned Delivery Partner</th>
+                    <th data-i18n="deliveryStatus">Delivery Progress Status</th>
+                  </tr>
+                </thead>
+                <tbody id="admin-claims-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- ══ DELIVERY PARTNERS TAB ══ -->
+        <div id="admin-partners" class="admin-tab-section d-none">
+          <div class="admin-panel">
+            <div class="admin-panel-header">
+              <div class="admin-panel-title">
+                <div class="panel-icon" style="background:rgba(16,185,129,0.15);color:#6ee7b7;">
+                  <i data-lucide="shield-check"></i>
+                </div>
+                Delivery Partners · License &amp; Govt ID Verification
+              </div>
+              <div class="admin-panel-actions">
+                <span id="admin-partners-count" class="admin-count-pill">0 registered</span>
+              </div>
+            </div>
+            <!-- Partners rendered as cards -->
+            <div class="partner-card-grid" id="admin-partners-grid">
+              <!-- Populated by admin.js -->
+            </div>
+            <!-- Fallback table for data -->
+            <div class="table-responsive" id="admin-partners-table-wrap" style="display:none;">
+              <table class="admin-table-premium">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Partner</th>
+                    <th>Vehicle</th>
+                    <th>Govt ID</th>
+                    <th>License No.</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody id="admin-partners-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /.admin-content -->
+    </section>
+
+    <!-- 5. DELIVERY PARTNER DASHBOARD -->
+    <section id="view-delivery" class="dashboard-wrapper d-none">
+      <div class="hero-section" style="background: linear-gradient(135deg, rgba(14,165,233,0.08), rgba(99,102,241,0.05)); border-color: rgba(14,165,233,0.15);">
+        <div class="hero-info">
+          <h1 id="delivery-partner-welcome">Welcome, Delivery Partner</h1>
+          <p>Rescue food, complete assigned pickup missions, and deliver fresh meals to beneficiaries.</p>
+          <div id="delivery-verification-badge" class="verification-badge verified" style="margin-top: 0.5rem; display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.35rem 0.8rem; border-radius: 20px; font-size: 0.8rem; font-weight: 600;">
+            <!-- Rendered dynamically -->
+          </div>
+        </div>
+      </div>
+
+      <div class="admin-stats-grid" style="margin-bottom: 1.5rem;">
+        <div class="admin-stat-card">
+          <div class="admin-stat-icon" style="background:rgba(99,102,241,0.15);color:#6366f1;"><i data-lucide="package-search"></i></div>
+          <div class="admin-stat-info">
+            <div class="admin-stat-value" id="stat-delivery-active">0</div>
+            <div class="admin-stat-label">Active Missions</div>
+          </div>
+        </div>
+        <div class="admin-stat-card">
+          <div class="admin-stat-icon" style="background:rgba(16,185,129,0.15);color:#10b981;"><i data-lucide="check-circle-2"></i></div>
+          <div class="admin-stat-info">
+            <div class="admin-stat-value" id="stat-delivery-completed">0</div>
+            <div class="admin-stat-label">Completed Deliveries</div>
+          </div>
+        </div>
+        <div class="admin-stat-card">
+          <div class="admin-stat-icon" style="background:rgba(245,158,11,0.15);color:#f59e0b;"><i data-lucide="star"></i></div>
+          <div class="admin-stat-info">
+            <div class="admin-stat-value">4.9 ★</div>
+            <div class="admin-stat-label">Driver Rating</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card-glass" style="padding: 1.5rem;">
+        <h2 style="font-size: 1.15rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+          <i data-lucide="navigation" style="color: var(--accent-business);"></i> Assigned Pickup & Delivery Missions
+        </h2>
+        <div id="delivery-orders-list">
+          <!-- Rendered dynamically in delivery.js -->
+        </div>
+      </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="text-center" style="padding: 2rem; border-top: 1px solid var(--border-glass); color: var(--text-muted); font-size: 0.8rem;">
+      <p>&copy; 2026 NutriShare AI Platform. Harnessing intelligence to eliminate food waste.</p>
+    </footer>
+
+    <!-- MODAL: DONATE INVENTORY ITEM (BUSINESS) -->
+    <div id="modal-donate" class="modal-overlay d-none">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 id="donate-modal-title" class="modal-title">Donate Surplus Food</h3>
+          <button id="btn-close-donate-modal" class="modal-close-btn">&times;</button>
+        </div>
+        <form id="form-donate-item">
+          <input type="hidden" id="donate-item-id">
+          <p style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 1.25rem;">
+            You are moving <strong id="donate-item-display-name">Item</strong> into the public redistribution network. Recipient NGOs nearby will be notified.
+          </p>
+          <div class="form-group">
+            <label class="form-label" for="donate-quantity">Quantity to Donate</label>
+            <div style="display: grid; grid-template-columns: 1fr 80px; gap: 0.75rem;">
+              <input type="number" id="donate-quantity" class="form-input" min="0.1" step="any" required>
+              <input type="text" id="donate-unit" class="form-input" disabled style="background: rgba(255,255,255,0.05); text-align: center;">
+            </div>
+            <span id="donate-qty-max-label" style="font-size: 0.75rem; color: var(--text-muted); display: block; margin-top: 0.25rem;">Max available: 0</span>
+          </div>
+          <button type="submit" class="btn btn-primary-business w-full">
+            <i data-lucide="heart-handshake"></i> Publish Redistribution Donation
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- MODAL: CLAIM SCHEDULE PICKUP (NGO) -->
+    <div id="modal-schedule-claim" class="modal-overlay d-none">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 class="modal-title">Schedule Claim Pickup</h3>
+          <button id="btn-close-claim-modal" class="modal-close-btn">&times;</button>
+        </div>
+        <form id="form-schedule-claim">
+          <p style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 1.25rem;">
+            Provide pickup coordination details to generate collection route and verification tickets.
+          </p>
+          <div class="form-group">
+            <label class="form-label" for="claim-pickup-time">Estimated Pickup Time</label>
+            <input type="datetime-local" id="claim-pickup-time" class="form-input" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="claim-transport">Transport Logistics Type</label>
+            <select id="claim-transport" class="form-input form-select">
+              <option value="Volunteer Vehicle">Volunteer Personal Vehicle (Car)</option>
+              <option value="Cargo Van">NGO Refrigerated Cargo Van</option>
+              <option value="Cargo E-Bike">Electric Cargo E-Bike (Local eco-courier)</option>
+              <option value="Foot Courier">Foot Courier (Within 1km)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="claim-contact">Driver/Courier Contact Phone</label>
+            <input type="text" id="claim-contact" class="form-input" required placeholder="e.g. 555-9080">
+          </div>
+          <button type="submit" class="btn btn-primary-ngo w-full">
+            <i data-lucide="check-circle"></i> Confirm Claim & Generate Tickets
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- MODAL: COLLECTION ROUTING TICKET (NGO/BUSINESS) -->
+    <div id="modal-ticket" class="modal-overlay d-none">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 class="modal-title">Collection Routing Ticket</h3>
+          <button id="btn-close-ticket-modal" class="modal-close-btn">&times;</button>
+        </div>
+        <div style="border: 1px dashed var(--border-glass-focus); padding: 1.5rem; border-radius: 12px; background: rgba(255,255,255,0.01);">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.25rem;">
+            <div>
+              <h4 id="ticket-item-name" style="font-family: var(--font-heading); font-weight: 800; font-size: 1.2rem;">Sourdough Loaf</h4>
+              <p id="ticket-category" style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">Bakery</p>
+            </div>
+            <div id="ticket-qr-code" class="ticket-qr">
+              <!-- Inline SVG QR Code simulation -->
+              <svg width="100%" height="100%" viewBox="0 0 25 25" style="shape-rendering: crispEdges;">
+                <path d="M0 0h5v5H0zm0 20h5v5H0zm20-20h5v5h-5zM20 20h5v5h-5zM9 9h7v7H9z" fill="#0b1120"/>
+                <path d="M2 2h1v1H2zm0 18h1v1H2zm18-18h1v1h-1zm0 18h1v1h-1zM11 11h3v3h-3z" fill="#6366f1"/>
+                <path d="M7 2h2v1H7zm1 3h2v1H8zm11 2h2v1h-2zm-3 8h2v2h-2zm-5 4h1v1h-1z" fill="#000"/>
+              </svg>
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; font-size: 0.85rem; margin-bottom: 1.25rem;">
+            <div>
+              <p style="color: var(--text-secondary);">Provider:</p>
+              <strong id="ticket-provider">Green Meadows Grocer</strong>
+              <p id="ticket-provider-addr" style="font-size: 0.75rem; color: var(--text-muted);">Springfield</p>
+            </div>
+            <div>
+              <p style="color: var(--text-secondary);">Claim Quantity:</p>
+              <strong id="ticket-qty">0 units</strong>
+            </div>
+            <div>
+              <p style="color: var(--text-secondary);">Collection Window:</p>
+              <strong id="ticket-time">Today, 10:00 AM</strong>
+            </div>
+            <div>
+              <p style="color: var(--text-secondary);">Transport Logistics:</p>
+              <strong id="ticket-vehicle">Cargo Van</strong>
+            </div>
+          </div>
+
+          <div class="mock-map">
+            <div class="map-node business"></div>
+            <div class="map-node ngo"></div>
+            <div class="map-route"></div>
+            <i class="map-courier" data-lucide="truck"></i>
+          </div>
+        </div>
+
+        <button id="btn-ticket-done" class="btn btn-secondary w-full mt-3">
+          Done & Close
+        </button>
+      </div>
+    </div>
+
+  </div>
+
+  <div id="toast-container" class="toast-container"></div>
+
+  <script type="module" src="./src/main.js"></script>
+  <!-- ═══ DELIVERY PARTNER MODAL ═══ -->
+  <div id="modal-delivery-partner" class="modal-overlay d-none">
+    <div class="modal-box" style="max-width:520px;">
+      <div class="modal-header">
+        <div style="display:flex;align-items:center;gap:0.6rem;">
+          <span style="font-size:1.5rem;">🚚</span>
+          <div>
+            <h3 style="margin:0;font-size:1.05rem;">Assign Delivery Partner</h3>
+            <p id="dp-modal-donation-name" style="margin:0;font-size:0.78rem;color:var(--text-muted);"></p>
+          </div>
+        </div>
+        <button id="btn-close-dp-modal" class="btn btn-sm btn-secondary"><i data-lucide="x"></i></button>
+      </div>
+      <div style="padding:1.25rem;">
+        <p style="font-size:0.82rem;color:var(--text-secondary);margin-bottom:1rem;">Choose a delivery partner to pick up and deliver the donated food to the NGO.</p>
+        <div id="dp-partner-list" style="display:flex;flex-direction:column;gap:0.75rem;">
+          <!-- Partners rendered dynamically -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ LIVE TRACKING MODAL ═══ -->
+  <div id="modal-tracking" class="modal-overlay d-none">
+    <div class="modal-box" style="max-width:700px;">
+      <div class="modal-header">
+        <div style="display:flex;align-items:center;gap:0.6rem;">
+          <span style="font-size:1.5rem;">📍</span>
+          <div>
+            <h3 style="margin:0;font-size:1.05rem;">Live Delivery Tracking</h3>
+            <p id="tracking-partner-name" style="margin:0;font-size:0.78rem;color:var(--text-muted);"></p>
+          </div>
+        </div>
+        <button id="btn-close-tracking-modal" class="btn btn-sm btn-secondary"><i data-lucide="x"></i></button>
+      </div>
+      <div style="padding:1rem;">
+        <!-- Status Bar -->
+        <div style="display:flex;gap:0.5rem;margin-bottom:1rem;flex-wrap:wrap;">
+          <div class="tracking-step" id="tstep-assigned">
+            <span class="tstep-dot"></span><span>Assigned</span>
+          </div>
+          <div class="tracking-step" id="tstep-pickup">
+            <span class="tstep-dot"></span><span>Picked Up</span>
+          </div>
+          <div class="tracking-step" id="tstep-transit">
+            <span class="tstep-dot"></span><span>In Transit</span>
+          </div>
+          <div class="tracking-step" id="tstep-delivered">
+            <span class="tstep-dot"></span><span>Delivered</span>
+          </div>
+        </div>
+        <!-- ETA Bar -->
+        <div id="tracking-eta-bar" style="background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.2);border-radius:8px;padding:0.65rem 1rem;display:flex;align-items:center;gap:0.75rem;margin-bottom:1rem;">
+          <span style="font-size:1.4rem;">⏱️</span>
+          <div>
+            <div id="tracking-eta-text" style="font-weight:700;font-size:0.9rem;color:var(--accent-business);">Calculating ETA…</div>
+            <div id="tracking-status-text" style="font-size:0.75rem;color:var(--text-secondary);">Partner on the way</div>
+          </div>
+          <div style="margin-left:auto;text-align:right;">
+            <div id="tracking-distance" style="font-size:0.85rem;font-weight:600;">-- km</div>
+            <div style="font-size:0.7rem;color:var(--text-muted);">distance</div>
+          </div>
+        </div>
+        <!-- Map -->
+        <div id="tracking-map" style="width:100%;height:320px;border-radius:12px;overflow:hidden;border:1px solid var(--border-glass);"></div>
+        <!-- Partner Info -->
+        <div id="tracking-partner-card" style="margin-top:0.75rem;background:rgba(255,255,255,0.03);border:1px solid var(--border-glass);border-radius:8px;padding:0.75rem;display:flex;align-items:center;gap:0.75rem;">
+          <div id="tracking-partner-avatar" style="width:44px;height:44px;border-radius:50%;background:rgba(16,185,129,0.15);display:flex;align-items:center;justify-content:center;font-size:1.5rem;flex-shrink:0;"></div>
+          <div>
+            <div id="tracking-partner-info-name" style="font-weight:700;font-size:0.9rem;"></div>
+            <div id="tracking-partner-info-sub" style="font-size:0.75rem;color:var(--text-muted);"></div>
+          </div>
+          <div style="margin-left:auto;">
+            <div id="tracking-partner-rating" style="font-size:0.85rem;font-weight:700;color:#f59e0b;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>
